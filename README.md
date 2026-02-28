@@ -10,10 +10,10 @@ A simplified transport simulation game inspired by OpenTTD, built in Java with L
 
 | Name | GitLab Username | Role |
 |------|----------------|------|
-| Ehsanullah Ehsanullah (Sano) | @ehsanullah | TBD |
-| Mustafa | @mustafa | TBD |
-| Tayma AlDabbas | @tayma | TBD |
-| A | @a | TBD |
+| Ehsanullah Ehsanullah | @Sano | TBD |
+| Al Dabbas Tayma | @Tayma | TBD |
+| Samma Mustapha | @Mustapha | TBD |
+| Sultanalieva Aiperi | @Alieva | TBD |
 
 > Roles will be assigned during Milestone 1 planning.
 
