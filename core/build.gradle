@@ -1,0 +1,45 @@
+apply plugin: 'java-library'
+apply plugin: 'jacoco'
+
+sourceCompatibility = 17
+targetCompatibility = 17
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+sourceSets.main.java.srcDirs  = ['src/main/java']
+sourceSets.test.java.srcDirs  = ['src/test/java']
+
+dependencies {
+    // LibGDX core
+    api "com.badlogicgames.gdx:gdx:$gdxVersion"
+    api "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+
+    // Ashley ECS
+    api "com.badlogicgames.ashley:ashley:$ashleyVersion"
+
+    // VisUI
+    api "com.kotcrab.vis:vis-ui:$visuiVersion"
+
+    // Testing
+    testImplementation "org.junit.jupiter:junit-jupiter:$junit5Version"
+    testImplementation "org.mockito:mockito-core:$mockitoVersion"
+    testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required  = true
+        html.required = true
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.10"
+}

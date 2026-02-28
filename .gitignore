@@ -1,0 +1,51 @@
+# ===== Java =====
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.ear
+hs_err_pid*
+
+# ===== Gradle =====
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ===== LibGDX =====
+/android/
+/ios/
+/html/
+core/out/
+desktop/out/
+
+# ===== IDE - IntelliJ IDEA =====
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ===== IDE - Eclipse =====
+.metadata
+.classpath
+.project
+.settings/
+bin/
+tmp/
+
+# ===== IDE - VS Code =====
+.vscode/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+*~
+
+# ===== Test Coverage =====
+*.exec
+coverage/
+
+# ===== Logs =====
+logs/
+*.log

@@ -1,0 +1,46 @@
+image: gradle:7.6-jdk17
+
+variables:
+  GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - .gradle/
+    - build/
+    - core/build/
+    - desktop/build/
+
+stages:
+  - test
+  - build
+
+test:
+  stage: test
+  script:
+    - chmod +x gradlew
+    - ./gradlew core:test core:jacocoTestReport
+  artifacts:
+    when: always
+    reports:
+      junit: core/build/test-results/test/TEST-*.xml
+    paths:
+      - core/build/reports/tests/
+      - core/build/reports/jacoco/
+    expire_in: 2 weeks
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH == "master"
+
+build:
+  stage: build
+  script:
+    - chmod +x gradlew
+    - ./gradlew desktop:dist
+  artifacts:
+    paths:
+      - desktop/build/libs/*.jar
+    expire_in: 2 weeks
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"

@@ -1,0 +1,3 @@
+rootProject.name = 'citopia'
+
+include 'core', 'desktop'
