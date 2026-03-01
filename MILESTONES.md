@@ -2,31 +2,36 @@
 
 ---
 
-## Milestone 1 — Foundation & Architecture
+## Milestone 1 — Requirement Analysis & Design
 **Due: March 14, 2026 (Weeks 1–2)**
 
-> Goal: Set up the project, design the architecture, create the base classes, and establish team workflows.
+> Goal: Complete requirement analysis and software design documentation — feasibility plan, specifications, UML diagrams, user stories, and UI mockups.
 
 | # | Task | Type | Priority | Assignee |
 |---|------|------|----------|----------|
 | 1 | Set up LibGDX project with Gradle build system | architecture | critical | — |
 | 2 | Configure GitLab CI/CD pipeline (build + test) | architecture | critical | — |
-| 3 | Design core class hierarchy (City, Vehicle, Route, Cargo) | architecture | high | — |
-| 4 | Create UML class diagram for model package | documentation | high | — |
-| 5 | Implement `City` model class with unit tests | feature | high | — |
-| 6 | Implement `Vehicle` model class with unit tests | feature | high | — |
-| 7 | Implement `Route` model class with unit tests | feature | high | — |
-| 8 | Implement `Cargo` / `CargoType` model classes with tests | feature | medium | — |
-| 9 | Implement `GameState` class (holds world data) | feature | high | — |
-| 10 | Set up JUnit 5 + JaCoCo test infrastructure | testing | high | — |
+| 3 | Write feasibility plan | documentation | critical | — |
+| 4 | Write functional specification | documentation | critical | — |
+| 5 | Write non-functional specification | documentation | critical | — |
+| 6 | Create use-case diagram (consistent with functional spec) | documentation | critical | — |
+| 7 | Write detailed user stories (testable by non-programmer) | documentation | critical | — |
+| 8 | Create class diagram (public interfaces, responsibilities, relationships) | documentation | critical | — |
+| 9 | Create component diagram | documentation | high | — |
+| 10 | Design UI mockups (all screens, popups, states) | documentation | critical | — |
 | 11 | Write project README and CONTRIBUTING guide | documentation | medium | — |
 | 12 | Define team roles and assign responsibilities | task | medium | — |
 
 **Deliverables:**
+- `docs/feasibility-plan.md` — Project feasibility assessment
+- `docs/functional-specification.md` — Detailed functional requirements
+- `docs/non-functional-specification.md` — Performance, usability, reliability requirements
+- `docs/use-case-diagram.puml` — PlantUML use-case diagram
+- `docs/user-stories.md` — User stories with acceptance criteria and edge cases
+- `docs/class-diagram.puml` — PlantUML class diagram with public interfaces
+- `docs/component-diagram.puml` — PlantUML component diagram
+- `docs/ui-mockups/` — UI mockup images for all screens
 - Working Gradle project that compiles and runs tests in CI
-- Core model classes with >90% test coverage
-- UML class diagram
-- README, CONTRIBUTING, MILESTONES documentation
 
 ---
 
