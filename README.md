@@ -1,10 +1,14 @@
 # 🏙️ Citopia — Mini Transport Tycoon
-![Citopia_Banner.png](uploads/e704cc2998e30196cd1090f1b65c46f6/Citopia_Banner.png)
+
+---
+
+![Citopia_Banner](https://i.ibb.co/rRmFW6dd/Citopia-Banner.png)
+
+---
 **ELTE Software Technology Practice 2026 — Group 05**
 
 A simplified transport simulation game inspired by OpenTTD, built in Java with LibGDX.
 
-[](url)
 
 ## 🎮 About the Game
 
