@@ -1,4 +1,4 @@
-# 🏙️ Citopia — Mini Transport Tycoon
+# 🏙️ Citopia: Mini Transport Tycoon
 
 ---
 
