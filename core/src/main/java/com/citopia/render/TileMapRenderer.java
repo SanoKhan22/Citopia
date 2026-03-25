@@ -51,9 +51,10 @@ public class TileMapRenderer {
 
     private Color getTileColor(TileType tileType) {
         return switch (tileType) {
-            case GRASS -> new Color(0.45f, 0.72f, 0.34f, 1f);
+            case SAND -> new Color(0.86f, 0.76f, 0.52f, 1f);
             case WATER -> new Color(0.24f, 0.50f, 0.82f, 1f);
-            case MOUNTAIN -> new Color(0.55f, 0.55f, 0.55f, 1f);
+            case DUNE -> new Color(0.72f, 0.58f, 0.33f, 1f);
+            case OASIS -> new Color(0.31f, 0.66f, 0.42f, 1f);
         };
     }
 }

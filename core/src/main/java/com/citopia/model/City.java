@@ -1,5 +1,7 @@
 package com.citopia.model;
 
+import com.citopia.render.TileMapRenderer;
+
 /**
  * Represents a city in the transport network.
  * Cities are endpoints for routes and generate cargo demand.
@@ -28,6 +30,14 @@ public class City {
     public float getX() { return x; }
     public float getY() { return y; }
     public int getPopulation() { return population; }
+
+    public int getTileX() {
+        return (int) (x / TileMapRenderer.TILE_SIZE);
+    }
+
+    public int getTileY() {
+        return (int) (y / TileMapRenderer.TILE_SIZE);
+    }
 
     public void setPopulation(int population) {
         if (population < 0) {
