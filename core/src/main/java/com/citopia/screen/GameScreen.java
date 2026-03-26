@@ -12,8 +12,12 @@ import com.citopia.map.TileMap;
 import com.citopia.map.TileType;
 import com.citopia.model.City;
 import com.citopia.model.CityPlacementValidator;
+import com.citopia.model.Route;
+import com.citopia.pathfinding.AStarPathfinder;
 import com.citopia.render.CityRenderer;
+import com.citopia.render.RouteRenderer;
 import com.citopia.render.TileMapRenderer;
+import com.citopia.transport.RoutePlanner;
 
 import java.util.List;
 
@@ -31,7 +35,9 @@ public class GameScreen extends ScreenAdapter {
     private final TileMap tileMap;
     private final TileMapRenderer tileMapRenderer;
     private final CityRenderer cityRenderer;
+    private final RouteRenderer routeRenderer;
     private final List<City> cities;
+    private final Route demoRoute;
     private City selectedCity;
 
     public GameScreen() {
@@ -40,7 +46,9 @@ public class GameScreen extends ScreenAdapter {
         this.tileMap = createDemoMap();
         this.tileMapRenderer = new TileMapRenderer();
         this.cityRenderer = new CityRenderer();
+        this.routeRenderer = new RouteRenderer();
         this.cities = createCities(tileMap);
+        this.demoRoute = new RoutePlanner(new AStarPathfinder()).planRoute(tileMap, cities.get(0), cities.get(1));
     }
 
     @Override
@@ -60,6 +68,7 @@ public class GameScreen extends ScreenAdapter {
         updateCamera(delta);
         ScreenUtils.clear(0.93f, 0.95f, 0.98f, 1f);
         tileMapRenderer.render(tileMap, camera);
+        routeRenderer.render(demoRoute, camera);
         cityRenderer.render(cities, selectedCity, camera);
         cityRenderer.renderOverlay(selectedCity);
     }
@@ -77,6 +86,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         tileMapRenderer.dispose();
+        routeRenderer.dispose();
         cityRenderer.dispose();
     }
 
