@@ -7,6 +7,7 @@ import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -50,6 +51,7 @@ public class GameScreen extends ScreenAdapter {
     private final SimulationEngine simulationEngine;
     private final SpriteBatch overlayBatch;
     private final BitmapFont overlayFont;
+    private final ShapeRenderer hudPanelRenderer;
     private String statusMessage;
     private City selectedCity;
 
@@ -67,6 +69,7 @@ public class GameScreen extends ScreenAdapter {
         this.simulationEngine = new SimulationEngine(companyFinance);
         this.overlayBatch = new SpriteBatch();
         this.overlayFont = new BitmapFont();
+        this.hudPanelRenderer = new ShapeRenderer();
         this.statusMessage = "Select a city, then press B to buy a donkey caravan";
     }
 
@@ -90,8 +93,9 @@ public class GameScreen extends ScreenAdapter {
         tileMapRenderer.render(tileMap, camera);
         routeRenderer.render(demoRoute, camera);
         cityRenderer.render(cities, selectedCity, camera);
-        cityRenderer.renderOverlay(selectedCity);
+        renderHudPanels();
         renderFinanceOverlay();
+        renderCityInfoOverlay();
     }
 
     @Override
@@ -111,6 +115,7 @@ public class GameScreen extends ScreenAdapter {
         cityRenderer.dispose();
         overlayBatch.dispose();
         overlayFont.dispose();
+        hudPanelRenderer.dispose();
     }
 
     private void handleShortcuts() {
@@ -153,23 +158,56 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void renderFinanceOverlay() {
+        float leftPanelX = 16f;
+        float lineTop = 132f;
+
         overlayBatch.begin();
-        overlayFont.draw(overlayBatch, String.format("Balance: %.0f", companyFinance.getBalance()), 16f, 132f);
-        overlayFont.draw(overlayBatch, "Fleet: " + vehicleShop.getOwnedVehicles().size(), 16f, 108f);
+        overlayFont.draw(overlayBatch, String.format("Balance: %.0f", companyFinance.getBalance()), leftPanelX, lineTop);
+        overlayFont.draw(overlayBatch, "Fleet: " + vehicleShop.getOwnedVehicles().size(), leftPanelX, lineTop - 24f);
         overlayFont.draw(overlayBatch, "Trips active/completed: "
-            + simulationEngine.getActiveTrips().size() + "/" + simulationEngine.getCompletedTrips().size(), 16f, 84f);
-        overlayFont.draw(overlayBatch, "B=buy  R=assign route  T=tick simulation", 16f, 60f);
-        overlayFont.draw(overlayBatch, statusMessage, 16f, 36f);
+            + simulationEngine.getActiveTrips().size() + "/" + simulationEngine.getCompletedTrips().size(), leftPanelX, lineTop - 48f);
+        overlayFont.draw(overlayBatch, "B=buy  R=assign route  T=tick simulation", leftPanelX, lineTop - 72f);
+        overlayFont.draw(overlayBatch, statusMessage, leftPanelX, lineTop - 96f);
 
         if (!simulationEngine.getActiveTrips().isEmpty()) {
             TransportTrip trip = simulationEngine.getActiveTrips().get(0);
             overlayFont.draw(overlayBatch,
                 "Trip progress: " + trip.getProgressSteps() + "/" + trip.requiredSteps(),
-                16f,
-                12f
+                leftPanelX,
+                lineTop - 120f
             );
         }
         overlayBatch.end();
+    }
+
+    private void renderCityInfoOverlay() {
+        if (selectedCity == null) {
+            return;
+        }
+
+        float panelX = Gdx.graphics.getWidth() - 260f;
+        float lineTop = 132f;
+
+        overlayBatch.begin();
+        overlayFont.draw(overlayBatch, "Selected City", panelX, lineTop);
+        overlayFont.draw(overlayBatch, "Name: " + selectedCity.getName(), panelX, lineTop - 24f);
+        overlayFont.draw(overlayBatch, "Population: " + selectedCity.getPopulation(), panelX, lineTop - 48f);
+        overlayBatch.end();
+    }
+
+    private void renderHudPanels() {
+        float screenWidth = Gdx.graphics.getWidth();
+        float panelY = 8f;
+        float panelHeight = 136f;
+
+        hudPanelRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        hudPanelRenderer.setColor(0f, 0f, 0f, 0.45f);
+        hudPanelRenderer.rect(8f, panelY, 500f, panelHeight);
+
+        if (selectedCity != null) {
+            hudPanelRenderer.rect(screenWidth - 268f, panelY, 260f, 80f);
+        }
+        hudPanelRenderer.end();
     }
 
     private void updateCamera(float delta) {
