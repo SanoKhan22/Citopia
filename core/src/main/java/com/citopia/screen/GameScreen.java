@@ -37,6 +37,9 @@ public class GameScreen extends ScreenAdapter {
     private static final float MIN_ZOOM = 0.5f;
     private static final float MAX_ZOOM = 2.5f;
     private static final float PAN_SPEED = 600f;
+    private static final int MAP_SCALE = 2;
+    private static final int BASE_MAP_WIDTH = 20;
+    private static final int BASE_MAP_HEIGHT = 15;
 
     private final OrthographicCamera camera;
     private final ScreenViewport viewport;
@@ -247,40 +250,56 @@ public class GameScreen extends ScreenAdapter {
         return Math.max(min, Math.min(max, value));
     }
 
+    private int scaled(int value) {
+        return value * MAP_SCALE;
+    }
+
+    private void setScaledTile(TileMap map, int tileX, int tileY, TileType tileType) {
+        int startX = scaled(tileX);
+        int startY = scaled(tileY);
+        for (int x = startX; x < startX + MAP_SCALE; x++) {
+            for (int y = startY; y < startY + MAP_SCALE; y++) {
+                map.setTile(x, y, tileType);
+            }
+        }
+    }
+
     private TileMap createDemoMap() {
-        TileMap map = new TileMap(20, 15, TileType.SAND);
+        TileMap map = new TileMap(scaled(BASE_MAP_WIDTH), scaled(BASE_MAP_HEIGHT), TileType.SAND);
 
         for (int x = 0; x < map.getWidth(); x++) {
             map.setTile(x, 0, TileType.WATER);
             map.setTile(x, map.getHeight() - 1, TileType.WATER);
         }
 
-        for (int y = 3; y < 11; y++) {
-            map.setTile(5, y, TileType.WATER);
-            map.setTile(6, y, TileType.WATER);
+        for (int x = scaled(5); x < scaled(7); x++) {
+            for (int y = scaled(3); y < scaled(11); y++) {
+                map.setTile(x, y, TileType.WATER);
+            }
         }
 
-        for (int x = 12; x < 17; x++) {
-            map.setTile(x, 9, TileType.DUNE);
-            map.setTile(x, 10, TileType.DUNE);
+        for (int x = scaled(12); x < scaled(17); x++) {
+            for (int y = scaled(9); y < scaled(11); y++) {
+                map.setTile(x, y, TileType.DUNE);
+            }
         }
 
-        map.setTile(14, 11, TileType.DUNE);
-        map.setTile(15, 11, TileType.DUNE);
-        map.setTile(2, 4, TileType.OASIS);
-        map.setTile(3, 4, TileType.OASIS);
-        map.setTile(10, 6, TileType.OASIS);
-        map.setTile(11, 6, TileType.OASIS);
-        map.setTile(15, 4, TileType.OASIS);
+        setScaledTile(map, 14, 11, TileType.DUNE);
+        setScaledTile(map, 15, 11, TileType.DUNE);
+        setScaledTile(map, 2, 4, TileType.OASIS);
+        setScaledTile(map, 3, 4, TileType.OASIS);
+        setScaledTile(map, 10, 6, TileType.OASIS);
+        setScaledTile(map, 11, 6, TileType.OASIS);
+        setScaledTile(map, 15, 4, TileType.OASIS);
         return map;
     }
 
     private List<City> createCities(TileMap map) {
         return List.of(
-            CityPlacementValidator.createTileAlignedCity("Riyadh", 3, 4, 1750000, map),
-            CityPlacementValidator.createTileAlignedCity("Doha", 10, 6, 200000, map),
-            CityPlacementValidator.createTileAlignedCity("Muscat", 9, 12, 160000, map),
-            CityPlacementValidator.createTileAlignedCity("Jeddah", 15, 4, 130000, map)
+            CityPlacementValidator.createTileAlignedCity("Riyadh", scaled(3), scaled(4), 1750000, map),
+            CityPlacementValidator.createTileAlignedCity("Doha", scaled(10), scaled(6), 200000, map),
+            CityPlacementValidator.createTileAlignedCity("Muscat", scaled(9), scaled(12), 160000, map),
+            CityPlacementValidator.createTileAlignedCity("Jeddah", scaled(15), scaled(4), 130000, map)
         );
     }
 
