@@ -21,6 +21,8 @@ import com.citopia.render.CityRenderer;
 import com.citopia.render.RouteRenderer;
 import com.citopia.render.TileMapRenderer;
 import com.citopia.transport.RoutePlanner;
+import com.citopia.transport.SimulationEngine;
+import com.citopia.transport.TransportTrip;
 import com.citopia.transport.VehicleShop;
 import com.citopia.transport.VehicleType;
 
@@ -45,6 +47,7 @@ public class GameScreen extends ScreenAdapter {
     private final Route demoRoute;
     private final CompanyFinance companyFinance;
     private final VehicleShop vehicleShop;
+    private final SimulationEngine simulationEngine;
     private final SpriteBatch overlayBatch;
     private final BitmapFont overlayFont;
     private String statusMessage;
@@ -61,6 +64,7 @@ public class GameScreen extends ScreenAdapter {
         this.demoRoute = new RoutePlanner(new AStarPathfinder()).planRoute(tileMap, cities.get(0), cities.get(1));
         this.companyFinance = new CompanyFinance(1500);
         this.vehicleShop = new VehicleShop(companyFinance);
+        this.simulationEngine = new SimulationEngine(companyFinance);
         this.overlayBatch = new SpriteBatch();
         this.overlayFont = new BitmapFont();
         this.statusMessage = "Select a city, then press B to buy a donkey caravan";
@@ -123,14 +127,48 @@ public class GameScreen extends ScreenAdapter {
                 statusMessage = "Purchase failed: insufficient funds";
             }
         }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            if (vehicleShop.getOwnedVehicles().isEmpty()) {
+                statusMessage = "Buy a vehicle first";
+                return;
+            }
+
+            try {
+                simulationEngine.assignTrip(vehicleShop.getOwnedVehicles().get(0), demoRoute, 10);
+                statusMessage = "Assigned first vehicle to demo route";
+            } catch (IllegalStateException exception) {
+                statusMessage = "Assignment failed: vehicle already on active trip";
+            }
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.T)) {
+            try {
+                simulationEngine.tick();
+                statusMessage = "Tick advanced";
+            } catch (IllegalStateException exception) {
+                statusMessage = "Tick failed: insufficient funds for operating cost";
+            }
+        }
     }
 
     private void renderFinanceOverlay() {
         overlayBatch.begin();
         overlayFont.draw(overlayBatch, String.format("Balance: %.0f", companyFinance.getBalance()), 16f, 132f);
         overlayFont.draw(overlayBatch, "Fleet: " + vehicleShop.getOwnedVehicles().size(), 16f, 108f);
-        overlayFont.draw(overlayBatch, "Press B to buy donkey caravan (120)", 16f, 84f);
-        overlayFont.draw(overlayBatch, statusMessage, 16f, 60f);
+        overlayFont.draw(overlayBatch, "Trips active/completed: "
+            + simulationEngine.getActiveTrips().size() + "/" + simulationEngine.getCompletedTrips().size(), 16f, 84f);
+        overlayFont.draw(overlayBatch, "B=buy  R=assign route  T=tick simulation", 16f, 60f);
+        overlayFont.draw(overlayBatch, statusMessage, 16f, 36f);
+
+        if (!simulationEngine.getActiveTrips().isEmpty()) {
+            TransportTrip trip = simulationEngine.getActiveTrips().get(0);
+            overlayFont.draw(overlayBatch,
+                "Trip progress: " + trip.getProgressSteps() + "/" + trip.requiredSteps(),
+                16f,
+                12f
+            );
+        }
         overlayBatch.end();
     }
 
