@@ -5,9 +5,12 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.citopia.economy.CompanyFinance;
 import com.citopia.map.TileMap;
 import com.citopia.map.TileType;
 import com.citopia.model.City;
@@ -18,6 +21,8 @@ import com.citopia.render.CityRenderer;
 import com.citopia.render.RouteRenderer;
 import com.citopia.render.TileMapRenderer;
 import com.citopia.transport.RoutePlanner;
+import com.citopia.transport.VehicleShop;
+import com.citopia.transport.VehicleType;
 
 import java.util.List;
 
@@ -38,6 +43,11 @@ public class GameScreen extends ScreenAdapter {
     private final RouteRenderer routeRenderer;
     private final List<City> cities;
     private final Route demoRoute;
+    private final CompanyFinance companyFinance;
+    private final VehicleShop vehicleShop;
+    private final SpriteBatch overlayBatch;
+    private final BitmapFont overlayFont;
+    private String statusMessage;
     private City selectedCity;
 
     public GameScreen() {
@@ -49,6 +59,11 @@ public class GameScreen extends ScreenAdapter {
         this.routeRenderer = new RouteRenderer();
         this.cities = createCities(tileMap);
         this.demoRoute = new RoutePlanner(new AStarPathfinder()).planRoute(tileMap, cities.get(0), cities.get(1));
+        this.companyFinance = new CompanyFinance(1500);
+        this.vehicleShop = new VehicleShop(companyFinance);
+        this.overlayBatch = new SpriteBatch();
+        this.overlayFont = new BitmapFont();
+        this.statusMessage = "Select a city, then press B to buy a donkey caravan";
     }
 
     @Override
@@ -66,11 +81,13 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         updateCamera(delta);
+        handleShortcuts();
         ScreenUtils.clear(0.93f, 0.95f, 0.98f, 1f);
         tileMapRenderer.render(tileMap, camera);
         routeRenderer.render(demoRoute, camera);
         cityRenderer.render(cities, selectedCity, camera);
         cityRenderer.renderOverlay(selectedCity);
+        renderFinanceOverlay();
     }
 
     @Override
@@ -88,6 +105,33 @@ public class GameScreen extends ScreenAdapter {
         tileMapRenderer.dispose();
         routeRenderer.dispose();
         cityRenderer.dispose();
+        overlayBatch.dispose();
+        overlayFont.dispose();
+    }
+
+    private void handleShortcuts() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.B)) {
+            if (selectedCity == null) {
+                statusMessage = "Select a city first before purchase";
+                return;
+            }
+
+            try {
+                vehicleShop.purchaseVehicle(VehicleType.DONKEY_CARAVAN, selectedCity);
+                statusMessage = "Purchased donkey caravan in " + selectedCity.getName();
+            } catch (IllegalStateException exception) {
+                statusMessage = "Purchase failed: insufficient funds";
+            }
+        }
+    }
+
+    private void renderFinanceOverlay() {
+        overlayBatch.begin();
+        overlayFont.draw(overlayBatch, String.format("Balance: %.0f", companyFinance.getBalance()), 16f, 132f);
+        overlayFont.draw(overlayBatch, "Fleet: " + vehicleShop.getOwnedVehicles().size(), 16f, 108f);
+        overlayFont.draw(overlayBatch, "Press B to buy donkey caravan (120)", 16f, 84f);
+        overlayFont.draw(overlayBatch, statusMessage, 16f, 60f);
+        overlayBatch.end();
     }
 
     private void updateCamera(float delta) {
