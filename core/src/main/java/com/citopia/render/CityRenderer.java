@@ -5,12 +5,18 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+<<<<<<< HEAD
 import com.badlogic.gdx.graphics.Texture;
 import com.citopia.model.City;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+=======
+import com.citopia.model.City;
+
+import java.util.List;
+>>>>>>> gitlab/feature/18-route-creation
 
 /**
  * Draws city markers and labels on the map.
@@ -18,19 +24,26 @@ import java.util.Map;
 public class CityRenderer {
 
     private static final float CITY_RADIUS = 10f;
+<<<<<<< HEAD
     private static final float CITY_ICON_SIZE = 32f;
+=======
+>>>>>>> gitlab/feature/18-route-creation
 
     private final ShapeRenderer shapeRenderer;
     private final BitmapFont font;
     private final SpriteBatch worldBatch;
     private final SpriteBatch overlayBatch;
+<<<<<<< HEAD
     private final Map<String, Texture> cityTextures;
+=======
+>>>>>>> gitlab/feature/18-route-creation
 
     public CityRenderer() {
         this.shapeRenderer = new ShapeRenderer();
         this.font = new BitmapFont();
         this.worldBatch = new SpriteBatch();
         this.overlayBatch = new SpriteBatch();
+<<<<<<< HEAD
         this.cityTextures = new HashMap<>();
         // Load city icons with error logging
         loadCityIcon("Jerusalem");
@@ -53,6 +66,8 @@ public class CityRenderer {
         } catch (Exception e) {
             System.out.println("Failed to load icon for " + cityName + " from " + path + ": " + e.getMessage());
         }
+=======
+>>>>>>> gitlab/feature/18-route-creation
     }
 
     public void render(List<City> cities, City selectedCity, OrthographicCamera camera) {
@@ -78,6 +93,7 @@ public class CityRenderer {
         font.dispose();
         worldBatch.dispose();
         overlayBatch.dispose();
+<<<<<<< HEAD
         for (Texture t : cityTextures.values()) {
             t.dispose();
         }
@@ -105,6 +121,19 @@ public class CityRenderer {
                 shapeRenderer.circle(city.getX(), city.getY(), CITY_RADIUS);
             }
         }
+=======
+    }
+
+    private void renderMarkers(List<City> cities, City selectedCity, OrthographicCamera camera) {
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        for (City city : cities) {
+            shapeRenderer.setColor(city.equals(selectedCity) ? Color.GOLD : Color.DARK_GRAY);
+            shapeRenderer.circle(city.getX(), city.getY(), CITY_RADIUS);
+        }
+
+>>>>>>> gitlab/feature/18-route-creation
         shapeRenderer.end();
     }
 
