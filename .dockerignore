@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+.gitlab-ci.yml
+.gitlab/
+
+# Gradle & Build output
+.gradle
+build/
+core/build/
+desktop/build/
+out/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Misc
+*.log

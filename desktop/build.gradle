@@ -18,6 +18,7 @@ dependencies {
     implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
     implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
     implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+    implementation "com.badlogicgames.gdx:gdx-tools:$gdxVersion"
 }
 
 task run(dependsOn: classes, type: JavaExec) {
@@ -26,6 +27,12 @@ task run(dependsOn: classes, type: JavaExec) {
     standardInput = System.in
     workingDir = project.assetsDir
     ignoreExitValue = true
+}
+
+task packAssets(dependsOn: classes, type: JavaExec) {
+    mainClass = 'com.citopia.desktop.AssetPacker'
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = project.assetsDir
 }
 
 task dist(type: Jar) {
