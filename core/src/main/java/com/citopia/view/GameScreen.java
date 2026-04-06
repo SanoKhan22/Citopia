@@ -33,9 +33,10 @@ public class GameScreen extends ScreenAdapter {
     private final TextureRegion[] groundRegions;
     private final TextureRegion desertSandRegion;
     private final TextureRegion inhabitantGroundRegion;
-    private final TextureRegion roadRegion;
+    // private final TextureRegion infertileLandRegion; // Not used for now
     private final TextureRegion treeRegion;
     private final TextureRegion cartRegion;
+    private final TextureRegion[] stoneRegions;
     private final BitmapFont hudFont;
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
@@ -59,9 +60,16 @@ public class GameScreen extends ScreenAdapter {
 
         this.desertSandRegion = safeRegion(AssetId.TERRAIN_DESERT_SAND, groundRegions[0]);
         this.inhabitantGroundRegion = groundRegions[22];
-        this.roadRegion = safeRegion(AssetId.TERRAIN_CRACKED_HARDPAN, groundRegions[1]);
+        // this.infertileLandRegion = safeRegion(AssetId.TERRAIN_CRACKED_HARDPAN, groundRegions[1]); // Not used for now
         this.treeRegion = safeRegion(AssetId.PROP_TREE_MEDIUM, groundRegions[2]);
         this.cartRegion = safeRegion(AssetId.VEHICLE_WOODEN_CART, groundRegions[3]);
+        this.stoneRegions = new TextureRegion[] {
+            safeRegion(AssetId.TERRAIN_DESERT_STONE_1, groundRegions[4]),
+            safeRegion(AssetId.TERRAIN_DESERT_STONE_2, groundRegions[5]),
+            safeRegion(AssetId.TERRAIN_DESERT_STONE_3, groundRegions[6]),
+            safeRegion(AssetId.TERRAIN_DESERT_STONE_4, groundRegions[7]),
+            safeRegion(AssetId.TERRAIN_DESERT_STONE_5, groundRegions[8])
+        };
 
         this.minimapPixmap = new Pixmap(tileMap.width(), tileMap.height(), Pixmap.Format.RGBA8888);
         buildMinimapPixmap();
@@ -80,16 +88,18 @@ public class GameScreen extends ScreenAdapter {
         );
         camera.zoom = 2.0f;
         camera.update();
-        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
+        centerCameraOnCityZone();
     }
 
     @Override
     public void resize(int width, int height) {
-        viewport.update(width, height, true);
+        viewport.update(width, height, false);
     }
 
     @Override
     public void show() {
+        centerCameraOnCityZone();
         Gdx.input.setInputProcessor(new InputAdapter() {
             @Override
             public boolean scrolled(float amountX, float amountY) {
@@ -158,6 +168,15 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
+    private void centerCameraOnCityZone() {
+        camera.position.set(
+                (tileMap.width() * MapConfig.TILE_DRAW_SIZE) / 2f,
+                (tileMap.height() * MapConfig.TILE_DRAW_SIZE) / 2f,
+                0f
+        );
+        camera.update();
+    }
+
     private void buildMinimapPixmap() {
         for (int y = 0; y < tileMap.height(); y++) {
             for (int x = 0; x < tileMap.width(); x++) {
@@ -167,12 +186,10 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void applyMinimapColor(int x, int y) {
-        if (isInhabitantBorder(x, y)) {
-            minimapPixmap.setColor(0.42f, 0.30f, 0.20f, 1f);
-        } else if (isInhabitantZone(x, y)) {
+        if (isInhabitantZone(x, y)) {
             minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
-        } else if (isRoadTile(x, y)) {
-            minimapPixmap.setColor(0.59f, 0.37f, 0.22f, 1f);
+        } else if (isStoneTile(x, y)) {
+            minimapPixmap.setColor(0.55f, 0.52f, 0.46f, 1f);
         } else if (hasTree(x, y)) {
             minimapPixmap.setColor(0.20f, 0.49f, 0.24f, 1f);
         } else {
@@ -191,58 +208,54 @@ public class GameScreen extends ScreenAdapter {
         minimapTexture.draw(minimapPixmap, 0, 0);
     }
 
-    private TextureRegion selectGroundRegion(int x, int y, int tileIndex) {
-        if (isInhabitantZone(x, y)) {
-            return inhabitantGroundRegion;
-        }
-        return desertSandRegion;
-    }
-
     private boolean isInhabitantZone(int x, int y) {
         int midX = tileMap.width() / 2;
         int midY = tileMap.height() / 2;
         return Math.abs(x - midX) <= INHABITANT_HALF_SIZE
             && Math.abs(y - midY) <= INHABITANT_HALF_SIZE;
-        }
-
-        private boolean isInhabitantBorder(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-        boolean onVerticalEdge = Math.abs(x - midX) == INHABITANT_HALF_SIZE
-            && Math.abs(y - midY) <= INHABITANT_HALF_SIZE;
-        boolean onHorizontalEdge = Math.abs(y - midY) == INHABITANT_HALF_SIZE
-            && Math.abs(x - midX) <= INHABITANT_HALF_SIZE;
-        return onVerticalEdge || onHorizontalEdge;
     }
 
-    private boolean isRoadTile(int x, int y) {
-        if (isInhabitantZone(x, y)) {
-            return false;
-        }
-
+    private float inhabitantBlendAlpha(int x, int y) {
         int midX = tileMap.width() / 2;
         int midY = tileMap.height() / 2;
+        int distanceFromCenter = Math.max(Math.abs(x - midX), Math.abs(y - midY));
 
-        boolean mainHorizontal = Math.abs(y - midY) <= 1;
-        boolean mainVertical = Math.abs(x - midX) <= 1;
+        int fullyCityRadius = INHABITANT_HALF_SIZE - 4;
+        int fadeEndRadius = INHABITANT_HALF_SIZE + 8;
 
-        boolean northSouthBranch = Math.abs(x - (tileMap.width() / 3)) <= 1
-                && y > tileMap.height() / 5
-                && y < tileMap.height() - (tileMap.height() / 5);
+        if (distanceFromCenter <= fullyCityRadius) {
+            return 1f;
+        }
+        if (distanceFromCenter >= fadeEndRadius) {
+            return 0f;
+        }
 
-        boolean eastWestBranch = Math.abs(y - (tileMap.height() * 2 / 3)) <= 1
-                && x > tileMap.width() / 6
-                && x < tileMap.width() - (tileMap.width() / 6);
-
-        return mainHorizontal || mainVertical || northSouthBranch || eastWestBranch;
+        float t = (distanceFromCenter - fullyCityRadius) / (float) (fadeEndRadius - fullyCityRadius);
+        return 1f - t;
     }
+
+    // Infertile land tile logic removed; drought tiles are not placed for now.
 
     private boolean hasTree(int x, int y) {
-        if (isRoadTile(x, y) || isInhabitantZone(x, y)) {
+        if (isInhabitantZone(x, y) || isStoneTile(x, y)) {
             return false;
         }
         int noise = Math.floorMod((x * 73) ^ (y * 41), 1000);
         return noise < 7;
+    }
+
+    private boolean isStoneTile(int x, int y) {
+        if (isInhabitantZone(x, y)) {
+            return false;
+        }
+
+        int noise = Math.floorMod((x * 97) ^ (y * 53), 1000);
+        return noise < 20;
+    }
+
+    private TextureRegion selectStoneRegion(int x, int y) {
+        int index = Math.floorMod((x * 31) ^ (y * 79), stoneRegions.length);
+        return stoneRegions[index];
     }
 
     private void drawCarts(float tileSize) {
@@ -280,42 +293,39 @@ public class GameScreen extends ScreenAdapter {
 
         game.batch.begin();
 
-        // Layer 1: Ground
+        // Layer 1: Ground + center city fade blend
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                int tileIndex = tileMap.groundTileIndex(x, y);
-                TextureRegion region = selectGroundRegion(x, y, tileIndex);
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
                 float drawY = y * MapConfig.TILE_DRAW_SIZE;
-                game.batch.draw(region, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+
+                game.batch.setColor(1f, 1f, 1f, 1f);
+                game.batch.draw(desertSandRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+
+                float blendAlpha = inhabitantBlendAlpha(x, y);
+                if (blendAlpha > 0f) {
+                    game.batch.setColor(1f, 1f, 1f, blendAlpha);
+                    game.batch.draw(inhabitantGroundRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+                }
             }
         }
+        game.batch.setColor(1f, 1f, 1f, 1f);
 
-        // Layer 2: Roads
+        // ...existing code...
+
+        // Layer 3: Stones
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isRoadTile(x, y)) {
+                if (!isStoneTile(x, y)) {
                     continue;
                 }
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
                 float drawY = y * MapConfig.TILE_DRAW_SIZE;
-                game.batch.draw(roadRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+                game.batch.draw(selectStoneRegion(x, y), drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
             }
         }
 
-        // Layer 2b: Inhabitant zone border for visibility
-        for (int y = startTileY; y <= endTileY; y++) {
-            for (int x = startTileX; x <= endTileX; x++) {
-                if (!isInhabitantBorder(x, y)) {
-                    continue;
-                }
-                float drawX = x * MapConfig.TILE_DRAW_SIZE;
-                float drawY = y * MapConfig.TILE_DRAW_SIZE;
-                game.batch.draw(roadRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
-            }
-        }
-
-        // Layer 3: Trees
+        // Layer 4: Trees
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
                 if (!hasTree(x, y)) {
@@ -327,7 +337,7 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
-        // Layer 4: Carts
+        // Layer 5: Carts
         drawCarts(MapConfig.TILE_DRAW_SIZE);
         game.batch.end();
 
