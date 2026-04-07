@@ -39,7 +39,18 @@ public class GameScreen extends ScreenAdapter {
     private final TextureRegion greenery6Region;
     private final TextureRegion greenery10Region;
     private final TextureRegion stones1Region;
+    private final TextureRegion stones4Region;
     private final TextureRegion stones7Region;
+    private final TextureRegion bigStonesBase12Region;
+    private final TextureRegion bigStonesMid11Region;
+    private final TextureRegion bigStonesPeak10Region;
+    private final TextureRegion decor3Region;
+    private final TextureRegion building1Region;
+    private final TextureRegion building2Region;
+    private final TextureRegion building3Region;
+    private final TextureRegion building4Region;
+    private final TextureRegion building5Region;
+    private final TextureRegion wellRegion;
     private final TextureRegion decor5Region;
     private final TextureRegion tree8Region;
     private final TextureRegion treeLargeRegion;
@@ -70,7 +81,18 @@ public class GameScreen extends ScreenAdapter {
         this.greenery6Region = safeRegion(AssetId.PROP_GREENERY_6, groundRegions[2]);
         this.greenery10Region = safeRegion(AssetId.PROP_GREENERY_10, greenery6Region);
         this.stones1Region = safeRegion(AssetId.PROP_STONES_1, safeRegion(AssetId.TERRAIN_DESERT_STONE_1, greenery6Region));
+        this.stones4Region = safeRegion(AssetId.PROP_STONES_4, stones1Region);
         this.stones7Region = safeRegion(AssetId.PROP_STONES_7, stones1Region);
+        this.bigStonesBase12Region = safeRegion(AssetId.PROP_BIGSTONES_BASE_12, stones1Region);
+        this.bigStonesMid11Region = safeRegion(AssetId.PROP_BIGSTONES_MID_11, bigStonesBase12Region);
+        this.bigStonesPeak10Region = safeRegion(AssetId.PROP_BIGSTONES_PEAK_10, bigStonesMid11Region);
+        this.decor3Region = safeRegion(AssetId.PROP_DECOR_3, greenery10Region);
+        this.building1Region = safeRegion(AssetId.PROP_BUILDING_1, safeRegion(AssetId.PROP_CITY_HOUSE, greenery10Region));
+        this.building2Region = safeRegion(AssetId.PROP_BUILDING_2, building1Region);
+        this.building3Region = safeRegion(AssetId.PROP_BUILDING_3, building1Region);
+        this.building4Region = safeRegion(AssetId.PROP_BUILDING_4, building3Region);
+        this.building5Region = safeRegion(AssetId.PROP_BUILDING_5, safeRegion(AssetId.PROP_CITY_HOUSE, building1Region));
+        this.wellRegion = safeRegion(AssetId.PROP_WELL, building5Region);
         this.decor5Region = safeRegion(AssetId.PROP_DECOR_5, greenery10Region);
         this.tree8Region = safeRegion(AssetId.PROP_TREE_8, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
         this.treeLargeRegion = safeRegion(AssetId.PROP_TREE_LARGE, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
@@ -135,14 +157,14 @@ public class GameScreen extends ScreenAdapter {
         }
 
         if (Gdx.input.isKeyPressed(Input.Keys.Q)) {
-            camera.zoom = Math.min(2.5f, camera.zoom + 0.8f * delta);
+            camera.zoom = Math.min(7.0f, camera.zoom + 0.8f * delta);
         }
         if (Gdx.input.isKeyPressed(Input.Keys.E)) {
             camera.zoom = Math.max(0.35f, camera.zoom - 0.8f * delta);
         }
 
         if (pendingScrollY != 0f) {
-            camera.zoom = clamp(camera.zoom + pendingScrollY * 0.1f, 0.35f, 2.5f);
+            camera.zoom = clamp(camera.zoom + pendingScrollY * 0.1f, 0.35f, 7.0f);
             pendingScrollY = 0f;
         }
 
@@ -417,6 +439,88 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
+    private void drawStackedMountainStones() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        float anchorTileX = midX - (OASIS_HALF_WIDTH + 12f);
+        float anchorTileY = midY + OASIS_HALF_HEIGHT + 3f;
+
+        float anchorX = anchorTileX * MapConfig.TILE_DRAW_SIZE;
+        float anchorY = anchorTileY * MapConfig.TILE_DRAW_SIZE;
+
+        float baseWidth = MapConfig.TILE_DRAW_SIZE * 9.2f;
+        float baseHeight = MapConfig.TILE_DRAW_SIZE * 6.2f;
+        float midWidth = MapConfig.TILE_DRAW_SIZE * 7.6f;
+        float midHeight = MapConfig.TILE_DRAW_SIZE * 5.3f;
+        float peakWidth = MapConfig.TILE_DRAW_SIZE * 5.8f;
+        float peakHeight = MapConfig.TILE_DRAW_SIZE * 4.3f;
+
+        game.batch.draw(bigStonesBase12Region, anchorX, anchorY, baseWidth, baseHeight);
+        game.batch.draw(bigStonesMid11Region, anchorX + MapConfig.TILE_DRAW_SIZE * 0.8f, anchorY + MapConfig.TILE_DRAW_SIZE * 1.0f, midWidth, midHeight);
+        game.batch.draw(bigStonesPeak10Region, anchorX + MapConfig.TILE_DRAW_SIZE * 1.7f, anchorY + MapConfig.TILE_DRAW_SIZE * 1.9f, peakWidth, peakHeight);
+    }
+
+    private void drawNorthCity() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        float topRowY = midY + OASIS_HALF_HEIGHT + 20f;
+        float midRowY = topRowY - 5.8f;
+        float homeRowY = topRowY - 10.0f;
+        float outerHomeRowY = homeRowY - 3.8f;
+        float villageCenterY = topRowY - 7.3f;
+
+        // North skyline anchors
+        drawCityBuilding(building3Region, midX - 16.0f, topRowY + 0.3f, 1.9f, 3.0f);
+        drawCityBuilding(building1Region, midX - 3.0f, topRowY, 2.8f, 3.4f);
+        drawCityBuilding(building4Region, midX + 10.5f, topRowY + 0.2f, 1.9f, 3.0f);
+
+        // Main street anchors (with intentional open gaps between)
+        drawCityBuilding(building2Region, midX - 11.5f, midRowY, 3.4f, 2.2f);
+        drawCityBuilding(building2Region, midX + 4.5f, midRowY - 0.2f, 3.4f, 2.2f);
+
+        // Village center well
+        drawCityBuilding(wellRegion, midX - 1.2f, villageCenterY, 2.8f, 2.8f);
+
+        // Two stones_4 near major homes/building anchors
+        drawCityBuilding(stones4Region, midX - 6.6f, topRowY - 1.5f, 1.2f, 1.2f);
+        drawCityBuilding(stones4Region, midX + 8.7f, midRowY - 1.1f, 1.2f, 1.2f);
+
+        // Scattered homes cluster 1 (west side)
+        drawCityBuilding(building5Region, midX - 14.0f, homeRowY, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX - 9.4f, homeRowY + 0.7f, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX - 6.0f, homeRowY - 0.3f, 1.8f, 2.1f);
+
+        // Scattered homes cluster 2 (center-east side)
+        drawCityBuilding(building5Region, midX + 0.6f, homeRowY + 0.5f, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX + 5.2f, homeRowY - 0.4f, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX + 9.6f, homeRowY + 0.3f, 1.8f, 2.1f);
+
+        // Outer homes for larger village footprint
+        drawCityBuilding(building5Region, midX + 16.2f, outerHomeRowY + 1.1f, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX - 1.8f, outerHomeRowY + 0.4f, 1.8f, 2.1f);
+        drawCityBuilding(building5Region, midX + 12.8f, outerHomeRowY - 0.2f, 1.8f, 2.1f);
+    }
+
+    private void drawVillageConnectorDecor() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        float corridorBaseY = midY + OASIS_HALF_HEIGHT + 7.5f;
+
+        drawCityBuilding(decor3Region, midX - 3.4f, corridorBaseY, 1.1f, 1.1f);
+        drawCityBuilding(decor3Region, midX + 2.2f, corridorBaseY + 1.6f, 1.1f, 1.1f);
+    }
+
+    private void drawCityBuilding(TextureRegion region, float tileX, float tileY, float tileWidth, float tileHeight) {
+        float drawX = tileX * MapConfig.TILE_DRAW_SIZE;
+        float drawY = tileY * MapConfig.TILE_DRAW_SIZE;
+        float width = tileWidth * MapConfig.TILE_DRAW_SIZE;
+        float height = tileHeight * MapConfig.TILE_DRAW_SIZE;
+        game.batch.draw(region, drawX, drawY, width, height);
+    }
+
     private float inhabitantBlendAlpha(int x, int y) {
         int midX = tileMap.width() / 2;
         int midY = tileMap.height() / 2;
@@ -531,6 +635,15 @@ public class GameScreen extends ScreenAdapter {
 
         // Layer 5b: Add exactly three extra big trees around the lake
         drawThreeExtraLakeTrees();
+
+        // Layer 6: Stacked mountain stones (12 base -> 11 mid -> 10 peak)
+        drawStackedMountainStones();
+
+        // Layer 7: Connector decor between oasis and village
+        drawVillageConnectorDecor();
+
+        // Layer 8: North-side city layout
+        drawNorthCity();
         game.batch.end();
 
         // Draw HUD for direction

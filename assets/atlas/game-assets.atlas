@@ -1,1363 +1,1357 @@
 
 game-assets.png
-size: 4096, 4096
+size: 8192, 4096
 format: RGBA8888
 filter: Nearest, Nearest
 repeat: none
 Preview_2D_RPG_Desert_Tileset
   rotate: false
-  xy: 2, 2042
+  xy: 2, 2046
   size: 3072, 2048
   orig: 3072, 2048
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 01
   rotate: false
-  xy: 2962, 1442
+  xy: 4665, 3329
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 02
   rotate: false
-  xy: 1518, 520
+  xy: 6741, 3838
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 03
   rotate: false
-  xy: 2508, 1302
+  xy: 6999, 3838
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 04
   rotate: false
-  xy: 2459, 1044
+  xy: 7257, 3838
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 05
   rotate: false
-  xy: 3224, 1527
+  xy: 7515, 3838
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 06
   rotate: false
-  xy: 3220, 1269
+  xy: 7773, 3838
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 07
   rotate: false
-  xy: 3484, 1808
+  xy: 2918, 1788
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 08
   rotate: false
-  xy: 3742, 1843
+  xy: 3176, 1812
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 09
   rotate: false
-  xy: 2157, 882
+  xy: 1275, 1143
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 10
   rotate: false
-  xy: 2145, 624
+  xy: 1275, 885
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 11
   rotate: false
-  xy: 2415, 786
+  xy: 1533, 1217
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 12
   rotate: false
-  xy: 2403, 528
+  xy: 1533, 959
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 13
   rotate: false
-  xy: 2145, 366
+  xy: 6419, 3496
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 14
   rotate: false
-  xy: 2403, 270
+  xy: 3558, 1951
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 15
   rotate: false
-  xy: 2717, 1044
+  xy: 773, 641
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 16
   rotate: false
-  xy: 2673, 786
+  xy: 4103, 2706
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 17
   rotate: false
-  xy: 2661, 528
+  xy: 3816, 1951
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 18
   rotate: false
-  xy: 2661, 270
+  xy: 6736, 3580
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 19
   rotate: false
-  xy: 563, 407
+  xy: 6994, 3580
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 20
   rotate: false
-  xy: 821, 407
+  xy: 7252, 3580
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 21
   rotate: false
-  xy: 563, 149
+  xy: 7510, 3580
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 22
   rotate: false
-  xy: 821, 149
+  xy: 7768, 3580
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 23
   rotate: false
-  xy: 1079, 407
+  xy: 1533, 701
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 24
   rotate: false
-  xy: 1079, 149
+  xy: 4923, 3329
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 25
   rotate: false
-  xy: 1337, 262
+  xy: 5181, 3393
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 26
   rotate: false
-  xy: 1337, 4
+  xy: 5439, 3436
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 27
   rotate: false
-  xy: 2931, 786
+  xy: 5697, 3436
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 28
   rotate: false
-  xy: 2919, 528
+  xy: 4665, 3071
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 29
   rotate: false
-  xy: 2919, 270
+  xy: 4923, 3071
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 30
   rotate: false
-  xy: 3742, 1585
+  xy: 5181, 3135
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 31
   rotate: false
-  xy: 3484, 1550
+  xy: 5439, 3178
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 32
   rotate: false
-  xy: 3742, 1327
+  xy: 5697, 3178
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 33
   rotate: false
-  xy: 3482, 1292
+  xy: 5955, 3356
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 34
   rotate: false
-  xy: 3740, 1069
+  xy: 5955, 3098
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 35
   rotate: false
-  xy: 3478, 1034
+  xy: 5181, 2877
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 36
   rotate: false
-  xy: 3736, 811
+  xy: 5439, 2920
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 37
   rotate: false
-  xy: 1595, 252
+  xy: 5697, 2920
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 38
   rotate: false
-  xy: 1853, 252
+  xy: 5955, 2840
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 39
   rotate: false
-  xy: 2111, 108
+  xy: 2078, 1466
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 40
   rotate: false
-  xy: 2369, 12
+  xy: 2336, 1466
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 41
   rotate: false
-  xy: 2627, 12
+  xy: 2594, 1490
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 42
   rotate: false
-  xy: 2885, 12
+  xy: 2852, 1490
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 43
   rotate: false
-  xy: 3143, 12
+  xy: 666, 383
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 44
   rotate: false
-  xy: 3177, 528
+  xy: 666, 125
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 45
   rotate: false
-  xy: 3177, 270
+  xy: 924, 383
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 46
   rotate: false
-  xy: 3401, 12
+  xy: 924, 125
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 47
   rotate: false
-  xy: 3189, 1011
+  xy: 3897, 2448
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 48
   rotate: false
-  xy: 3447, 776
+  xy: 4155, 2448
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 49
   rotate: false
-  xy: 3435, 518
+  xy: 4361, 2706
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 50
   rotate: false
-  xy: 3693, 518
+  xy: 4413, 2448
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 51
   rotate: false
-  xy: 3659, 260
+  xy: 4619, 2813
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 52
   rotate: false
-  xy: 3659, 2
+  xy: 4877, 2813
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
-Top-Down Simple Summer_Prop - Castle Round
-  rotate: false
-  xy: 1518, 778
-  size: 320, 480
-  orig: 320, 480
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Castle Square
-  rotate: false
-  xy: 1426, 1260
-  size: 360, 400
-  orig: 360, 400
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - House
-  rotate: false
-  xy: 3076, 2066
-  size: 480, 640
-  orig: 480, 640
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Tent
-  rotate: false
-  xy: 2157, 1140
-  size: 300, 280
-  orig: 300, 280
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Tree Medium
-  rotate: false
-  xy: 1788, 1260
-  size: 360, 400
-  orig: 360, 400
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Watchtower Tall
-  rotate: false
-  xy: 2962, 1700
-  size: 260, 340
-  orig: 260, 340
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Windmill
-  rotate: false
-  xy: 3076, 2708
-  size: 720, 720
-  orig: 720, 720
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Wooden Bridge Horizontal
-  rotate: false
-  xy: 2078, 1720
-  size: 480, 320
-  orig: 480, 320
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_Prop - Wooden Cart
-  rotate: false
-  xy: 3558, 2101
-  size: 320, 160
-  orig: 320, 160
-  offset: 0, 0
-  index: -1
-Top-Down Simple Summer_prop - Tree Large
-  rotate: false
-  xy: 2560, 1560
-  size: 400, 480
-  orig: 400, 480
-  offset: 0, 0
-  index: -1
-bigstones_10 for buildingmountains
-  rotate: false
-  xy: 2, 765
-  size: 769, 630
-  orig: 769, 630
-  offset: 0, 0
-  index: -1
-bigstones_11 for buildingmountains
-  rotate: false
-  xy: 2, 1397
-  size: 1422, 643
-  orig: 1422, 643
-  offset: 0, 0
-  index: -1
-bigstones_12 for buildingmountains
-  rotate: false
-  xy: 3076, 3430
-  size: 948, 660
-  orig: 948, 660
-  offset: 0, 0
-  index: -1
-building
-  rotate: false
-  xy: 1426, 1662
-  size: 650, 378
-  orig: 650, 378
-  offset: 0, 0
-  index: 2
-building
-  rotate: false
-  xy: 2, 214
-  size: 559, 549
-  orig: 559, 549
-  offset: 0, 0
-  index: 1
-building
-  rotate: false
-  xy: 773, 665
-  size: 404, 507
-  orig: 404, 507
-  offset: 0, 0
-  index: 5
-building
-  rotate: false
-  xy: 1840, 510
-  size: 303, 568
-  orig: 303, 568
-  offset: 0, 0
-  index: 4
-decor
-  rotate: false
-  xy: 2, 23
-  size: 375, 189
-  orig: 375, 189
-  offset: 0, 0
-  index: 5
-decor
-  rotate: false
-  xy: 2150, 1422
-  size: 356, 296
-  orig: 356, 296
-  offset: 0, 0
-  index: 1
-decor
-  rotate: false
-  xy: 1840, 1080
-  size: 315, 178
-  orig: 315, 178
-  offset: 0, 0
-  index: 8
-desertTent
-  rotate: false
-  xy: 3224, 1785
-  size: 258, 279
-  orig: 258, 279
-  offset: 0, 0
-  index: -1
-lake
-  rotate: false
-  xy: 773, 1174
-  size: 559, 221
-  orig: 559, 221
-  offset: 0, 0
-  index: -1
-stones
-  rotate: false
-  xy: 3798, 2948
-  size: 262, 181
-  orig: 262, 181
-  offset: 0, 0
-  index: 4
-tree
-  rotate: false
-  xy: 1179, 671
-  size: 337, 501
-  orig: 337, 501
-  offset: 0, 0
-  index: 8
-tree_1_datetrees
-  rotate: false
-  xy: 3798, 3131
-  size: 285, 297
-  orig: 285, 297
-  offset: 0, 0
-  index: -1
-tree_9_datetrees
-  rotate: false
-  xy: 3558, 2263
-  size: 378, 443
-  orig: 378, 443
-  offset: 0, 0
-  index: -1
-
-game-assets2.png
-size: 4096, 1024
-format: RGBA8888
-filter: Nearest, Nearest
-repeat: none
 Top-Down Simple Summer_Ground 53
   rotate: false
-  xy: 2, 764
+  xy: 4671, 2555
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 54
   rotate: false
-  xy: 2, 506
+  xy: 4929, 2555
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 55
   rotate: false
-  xy: 260, 764
+  xy: 5187, 2619
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Ground 56
   rotate: false
-  xy: 2, 248
+  xy: 5445, 2662
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Blue Banner
   rotate: false
-  xy: 1364, 6
+  xy: 4502, 2206
   size: 160, 240
   orig: 160, 240
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Bushes Large
   rotate: false
-  xy: 2066, 622
+  xy: 3798, 2722
   size: 240, 140
   orig: 240, 140
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Bushes Medium
   rotate: false
-  xy: 1182, 106
+  xy: 1251, 743
   size: 180, 140
   orig: 180, 140
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Bushes Small
   rotate: false
-  xy: 3091, 413
+  xy: 4970, 2175
   size: 140, 120
   orig: 140, 120
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Campfire
   rotate: false
-  xy: 2, 4
+  xy: 3897, 2286
   size: 200, 160
   orig: 200, 160
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Castle Round
+  rotate: false
+  xy: 6097, 3614
+  size: 320, 480
+  orig: 320, 480
+  offset: 0, 0
+  index: -1
+Top-Down Simple Summer_Prop - Castle Square
+  rotate: false
+  xy: 5373, 3694
+  size: 360, 400
+  orig: 360, 400
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Flag
   rotate: false
-  xy: 3978, 754
+  xy: 1913, 910
   size: 100, 160
   orig: 100, 160
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - House
+  rotate: false
+  xy: 3076, 2070
+  size: 480, 640
+  orig: 480, 640
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Magic Stone Tower
   rotate: false
-  xy: 2324, 620
+  xy: 5703, 2119
   size: 240, 400
   orig: 240, 400
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Red Banner
   rotate: false
-  xy: 1526, 6
+  xy: 7903, 2822
   size: 160, 240
   orig: 160, 240
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Rock 01
   rotate: false
-  xy: 2408, 518
+  xy: 1791, 1048
   size: 120, 100
   orig: 120, 100
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Rock 02
   rotate: false
-  xy: 1796, 45
+  xy: 221, 2
   size: 100, 60
   orig: 100, 60
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Rock 03
   rotate: false
-  xy: 1898, 45
+  xy: 323, 2
   size: 100, 60
   orig: 100, 60
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Rock 04
   rotate: false
-  xy: 3835, 208
+  xy: 4993, 3589
   size: 60, 60
   orig: 60, 60
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Rock 05
   rotate: false
-  xy: 3897, 208
+  xy: 4040, 2802
   size: 60, 60
   orig: 60, 60
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Tent
+  rotate: false
+  xy: 4103, 3263
+  size: 300, 280
+  orig: 300, 280
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Treasure Chest
   rotate: false
-  xy: 3736, 557
+  xy: 7335, 2902
   size: 200, 160
   orig: 200, 160
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Tree Medium
+  rotate: false
+  xy: 5735, 3694
+  size: 360, 400
+  orig: 360, 400
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Tree Small
   rotate: false
-  xy: 2566, 740
+  xy: 5948, 2558
   size: 240, 280
   orig: 240, 280
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Tree Stump Short
   rotate: false
-  xy: 3380, 430
+  xy: 3434, 1872
   size: 120, 100
   orig: 120, 100
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Tree Stump Tall
   rotate: false
-  xy: 3736, 415
+  xy: 7128, 2665
   size: 160, 140
   orig: 160, 140
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Watchtower Short
   rotate: false
-  xy: 2808, 760
+  xy: 6213, 2718
   size: 240, 260
   orig: 240, 260
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Watchtower Tall
+  rotate: false
+  xy: 404, 204
+  size: 260, 340
+  orig: 260, 340
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Well
   rotate: false
-  xy: 224, 46
+  xy: 4099, 2246
   size: 200, 200
   orig: 200, 200
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Windmill
+  rotate: false
+  xy: 3076, 2712
+  size: 720, 720
+  orig: 720, 720
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Wooden Barrel
   rotate: false
-  xy: 3363, 288
+  xy: 1791, 906
   size: 120, 140
   orig: 120, 140
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Wooden Bridge Horizontal
+  rotate: false
+  xy: 2078, 1724
+  size: 480, 320
+  orig: 480, 320
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Wooden Bridge Vertical
   rotate: false
-  xy: 3050, 700
+  xy: 6455, 2658
   size: 240, 320
   orig: 240, 320
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_Prop - Wooden Cart
+  rotate: false
+  xy: 6419, 3934
+  size: 320, 160
+  orig: 320, 160
+  offset: 0, 0
+  index: -1
 Top-Down Simple Summer_Prop - Wooden Fence Horizontal
   rotate: false
-  xy: 2, 166
+  xy: 404, 122
   size: 220, 80
   orig: 220, 80
   offset: 0, 0
   index: -1
 Top-Down Simple Summer_Prop - Wooden Fence Vertical
   rotate: false
-  xy: 2497, 208
+  xy: 4263, 2024
   size: 80, 220
   orig: 80, 220
   offset: 0, 0
   index: -1
+Top-Down Simple Summer_prop - Tree Large
+  rotate: false
+  xy: 2, 64
+  size: 400, 480
+  orig: 400, 480
+  offset: 0, 0
+  index: -1
 ancient_mudbrick_square_wall
   rotate: false
-  xy: 2177, 71
+  xy: 6729, 2998
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
 bg
   rotate: false
-  xy: 260, 506
+  xy: 4671, 2297
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
+big_house
+  rotate: false
+  xy: 773, 899
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+bigstones_10 for buildingmountains
+  rotate: false
+  xy: 2, 769
+  size: 769, 630
+  orig: 769, 630
+  offset: 0, 0
+  index: -1
+bigstones_11 for buildingmountains
+  rotate: false
+  xy: 2, 1401
+  size: 1422, 643
+  orig: 1422, 643
+  offset: 0, 0
+  index: -1
+bigstones_12 for buildingmountains
+  rotate: false
+  xy: 3076, 3434
+  size: 948, 660
+  orig: 948, 660
+  offset: 0, 0
+  index: -1
 building
   rotate: false
-  xy: 1808, 107
+  xy: 1426, 1666
+  size: 650, 378
+  orig: 650, 378
+  offset: 0, 0
+  index: 2
+building
+  rotate: false
+  xy: 4026, 3545
+  size: 559, 549
+  orig: 559, 549
+  offset: 0, 0
+  index: 1
+building
+  rotate: false
+  xy: 4587, 3587
+  size: 404, 507
+  orig: 404, 507
+  offset: 0, 0
+  index: 5
+building
+  rotate: false
+  xy: 3798, 2864
+  size: 303, 568
+  orig: 303, 568
+  offset: 0, 0
+  index: 4
+building
+  rotate: false
+  xy: 5703, 2521
   size: 243, 397
   orig: 243, 397
   offset: 0, 0
   index: 3
 cactus_greenery
   rotate: false
-  xy: 3096, 535
+  xy: 4819, 2132
   size: 149, 163
   orig: 149, 163
   offset: 0, 0
   index: 9
 cactus_greenery
   rotate: false
-  xy: 2386, 125
+  xy: 1916, 1072
   size: 109, 303
   orig: 109, 303
   offset: 0, 0
   index: 1
 cactus_greenery
   rotate: false
-  xy: 3485, 327
+  xy: 1433, 782
   size: 89, 101
   orig: 89, 101
   offset: 0, 0
   index: 4
 cactus_greenery
   rotate: false
-  xy: 3576, 318
+  xy: 6653, 2494
   size: 87, 162
   orig: 87, 162
   offset: 0, 0
   index: 3
 cactus_greenery
   rotate: false
-  xy: 3665, 373
+  xy: 4026, 3436
   size: 69, 107
   orig: 69, 107
   offset: 0, 0
   index: 5
 cactus_greenery
   rotate: false
-  xy: 3959, 209
+  xy: 6677, 3693
   size: 55, 59
   orig: 55, 59
   offset: 0, 0
   index: 2
 cracked_hardpan_mud_infertile_drought_zones
   rotate: false
-  xy: 2497, 142
+  xy: 3897, 2220
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
 date_palms_oasis_trees
   rotate: false
-  xy: 3380, 532
+  xy: 8026, 3501
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 dead_tree
   rotate: false
-  xy: 3755, 719
+  xy: 6697, 2677
   size: 221, 301
   orig: 221, 301
   offset: 0, 0
   index: 12
 dead_tree
   rotate: false
-  xy: 2053, 137
+  xy: 6920, 2695
   size: 206, 367
   orig: 206, 367
   offset: 0, 0
   index: 11
 decor
   rotate: false
-  xy: 2066, 563
+  xy: 1426, 1475
+  size: 375, 189
+  orig: 375, 189
+  offset: 0, 0
+  index: 5
+decor
+  rotate: false
+  xy: 2560, 1748
+  size: 356, 296
+  orig: 356, 296
+  offset: 0, 0
+  index: 1
+decor
+  rotate: false
+  xy: 6419, 3754
+  size: 315, 178
+  orig: 315, 178
+  offset: 0, 0
+  index: 8
+decor
+  rotate: false
+  xy: 2, 5
   size: 217, 57
   orig: 217, 57
   offset: 0, 0
   index: 4
 decor
   rotate: false
-  xy: 2053, 41
+  xy: 3434, 1974
   size: 122, 94
   orig: 122, 94
   offset: 0, 0
   index: 6
 decor
   rotate: false
-  xy: 1688, 131
+  xy: 1791, 789
   size: 114, 115
   orig: 114, 115
   offset: 0, 0
   index: 3
+desertTent
+  rotate: false
+  xy: 4405, 3264
+  size: 258, 279
+  orig: 258, 279
+  offset: 0, 0
+  index: -1
 desert_sand_primaryground
   rotate: false
-  xy: 3571, 252
+  xy: 563, 598
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
 desert_stone1
   rotate: false
-  xy: 3938, 564
+  xy: 8031, 3941
   size: 153, 153
   orig: 153, 153
   offset: 0, 0
   index: -1
 desert_stone2
   rotate: false
-  xy: 3898, 402
+  xy: 8031, 3786
   size: 153, 153
   orig: 153, 153
   offset: 0, 0
   index: -1
 desert_stone3
   rotate: false
-  xy: 2786, 585
+  xy: 8026, 3631
   size: 153, 153
   orig: 153, 153
   offset: 0, 0
   index: -1
 desert_stone4
   rotate: false
-  xy: 2786, 430
+  xy: 7335, 2747
   size: 153, 153
   orig: 153, 153
   offset: 0, 0
   index: -1
 desert_stone5
   rotate: false
-  xy: 2941, 545
+  xy: 4664, 2142
   size: 153, 153
   orig: 153, 153
   offset: 0, 0
   index: -1
-fire
-  rotate: false
-  xy: 3247, 518
-  size: 131, 142
-  orig: 131, 142
-  offset: 0, 0
-  index: -1
 greenery
   rotate: false
-  xy: 2261, 430
+  xy: 1426, 1401
   size: 85, 72
   orig: 85, 72
   offset: 0, 0
   index: 10
 greenery
   rotate: false
-  xy: 3485, 252
+  xy: 5955, 3619
   size: 84, 73
   orig: 84, 73
   offset: 0, 0
   index: 6
+lake
+  rotate: false
+  xy: 2, 546
+  size: 559, 221
+  orig: 559, 221
+  offset: 0, 0
+  index: -1
 lake_noedge
   rotate: false
-  xy: 518, 764
+  xy: 4929, 2297
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: -1
 land
   rotate: false
-  xy: 260, 248
+  xy: 5187, 2361
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 1
 land
   rotate: false
-  xy: 518, 506
+  xy: 5445, 2404
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 2
 land
   rotate: false
-  xy: 776, 764
+  xy: 5187, 2103
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 3
 land
   rotate: false
-  xy: 518, 248
+  xy: 5445, 2146
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 4
 land
   rotate: false
-  xy: 776, 506
+  xy: 6213, 3238
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 5
 land
   rotate: false
-  xy: 1034, 764
+  xy: 6213, 2980
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 6
 land
   rotate: false
-  xy: 776, 248
+  xy: 6471, 3238
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 7
 land
   rotate: false
-  xy: 1034, 506
+  xy: 6471, 2980
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 8
 land
   rotate: false
-  xy: 1292, 764
+  xy: 6729, 3322
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 9
 land
   rotate: false
-  xy: 1034, 248
+  xy: 6729, 3064
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 10
 land
   rotate: false
-  xy: 1292, 506
+  xy: 6987, 3322
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 11
 land
   rotate: false
-  xy: 1550, 764
+  xy: 6987, 3064
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 12
 land
   rotate: false
-  xy: 1292, 248
+  xy: 7245, 3322
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 13
 land
   rotate: false
-  xy: 1550, 506
+  xy: 7245, 3064
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 14
 land
   rotate: false
-  xy: 1808, 764
+  xy: 7503, 3322
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 15
 land
   rotate: false
-  xy: 1550, 248
+  xy: 7503, 3064
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 16
 land
   rotate: false
-  xy: 1808, 506
+  xy: 7761, 3322
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 17
 land
   rotate: false
-  xy: 2066, 764
+  xy: 7761, 3064
   size: 256, 256
   orig: 256, 256
   offset: 0, 0
   index: 18
 market_bazaar_trade_tent
   rotate: false
-  xy: 3233, 388
+  xy: 8019, 3371
   size: 128, 128
   orig: 128, 128
   offset: 0, 0
   index: -1
 mudbrick_house
   rotate: false
-  xy: 2348, 438
+  xy: 5112, 2231
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: -1
 road
   rotate: false
-  xy: 3665, 307
+  xy: 8019, 3087
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 1
 road
   rotate: false
-  xy: 2414, 452
+  xy: 1791, 723
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 2
 road
   rotate: false
-  xy: 2480, 452
+  xy: 1139, 659
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 3
 road
   rotate: false
-  xy: 3736, 349
+  xy: 6653, 2428
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 4
 road
   rotate: false
-  xy: 3802, 349
+  xy: 6795, 2998
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 5
 road
   rotate: false
-  xy: 3731, 283
+  xy: 3963, 2220
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 6
 road
   rotate: false
-  xy: 3797, 283
+  xy: 3556, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 7
 road
   rotate: false
-  xy: 2177, 5
+  xy: 3622, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 8
 road
   rotate: false
-  xy: 2243, 39
+  xy: 3688, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 9
 road
   rotate: false
-  xy: 2309, 39
+  xy: 3754, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 10
 road
   rotate: false
-  xy: 3637, 241
+  xy: 3820, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 11
 road
   rotate: false
-  xy: 3868, 336
+  xy: 3886, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 12
 road
   rotate: false
-  xy: 3934, 336
+  xy: 3952, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 13
 road
   rotate: false
-  xy: 4000, 336
+  xy: 3434, 1806
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 14
 road
   rotate: false
-  xy: 3863, 270
+  xy: 8085, 3087
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 15
 road
   rotate: false
-  xy: 3929, 270
+  xy: 5112, 2165
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 16
 road
   rotate: false
-  xy: 3995, 270
+  xy: 4018, 1885
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 17
 road
   rotate: false
-  xy: 2386, 59
+  xy: 3500, 1806
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 18
 road
   rotate: false
-  xy: 2452, 59
+  xy: 4345, 2192
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 19
 road
   rotate: false
-  xy: 2518, 76
+  xy: 4411, 2192
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 20
 road
   rotate: false
-  xy: 2563, 142
+  xy: 4345, 2126
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 21
 road
   rotate: false
-  xy: 2584, 76
+  xy: 4345, 2060
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 22
 road
   rotate: false
-  xy: 2518, 10
+  xy: 4411, 2126
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 23
 road
   rotate: false
-  xy: 2584, 10
+  xy: 4411, 2060
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 24
 road
   rotate: false
-  xy: 3703, 217
+  xy: 6653, 2362
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 25
 road
   rotate: false
-  xy: 3769, 217
+  xy: 3566, 1819
   size: 64, 64
   orig: 64, 64
   offset: 0, 0
   index: 26
 stones
   rotate: false
-  xy: 426, 58
+  xy: 1803, 1483
+  size: 262, 181
+  orig: 262, 181
+  offset: 0, 0
+  index: 4
+stones
+  rotate: false
+  xy: 4301, 2258
   size: 199, 188
   orig: 199, 188
   offset: 0, 0
   index: 6
 stones
   rotate: false
-  xy: 816, 110
+  xy: 7537, 2926
   size: 181, 136
   orig: 181, 136
   offset: 0, 0
   index: 5
 stones
   rotate: false
-  xy: 816, 5
+  xy: 563, 664
   size: 163, 103
   orig: 163, 103
   offset: 0, 0
   index: 8
 stones
   rotate: false
-  xy: 2941, 442
+  xy: 6213, 3511
   size: 148, 101
   orig: 148, 101
   offset: 0, 0
   index: 9
 stones
   rotate: false
-  xy: 1182, 4
+  xy: 8019, 3269
   size: 125, 100
   orig: 125, 100
   offset: 0, 0
   index: 7
 stones
   rotate: false
-  xy: 2285, 504
+  xy: 8019, 3153
   size: 121, 114
   orig: 121, 114
   offset: 0, 0
   index: 3
 stones
   rotate: false
-  xy: 3978, 916
+  xy: 1916, 1377
   size: 114, 104
   orig: 114, 104
   offset: 0, 0
   index: 2
 stones
   rotate: false
-  xy: 1688, 50
+  xy: 1031, 644
   size: 106, 79
   orig: 106, 79
   offset: 0, 0
   index: 1
 tree
   rotate: false
-  xy: 3529, 739
+  xy: 3558, 2209
+  size: 337, 501
+  orig: 337, 501
+  offset: 0, 0
+  index: 8
+tree
+  rotate: false
+  xy: 6427, 2375
   size: 224, 281
   orig: 224, 281
   offset: 0, 0
   index: 7
 tree
   rotate: false
-  xy: 2566, 566
+  xy: 1031, 725
   size: 218, 172
   orig: 218, 172
   offset: 0, 0
   index: 10
+tree_1_datetrees
+  rotate: false
+  xy: 4103, 2964
+  size: 285, 297
+  orig: 285, 297
+  offset: 0, 0
+  index: -1
 tree_2_datetrees
   rotate: false
-  xy: 3292, 662
+  xy: 6190, 2358
   size: 235, 358
   orig: 235, 358
   offset: 0, 0
   index: -1
 tree_3_datetrees
   rotate: false
-  xy: 999, 12
+  xy: 7720, 2828
   size: 181, 234
   orig: 181, 234
   offset: 0, 0
   index: -1
 tree_4_datetrees
   rotate: false
-  xy: 2261, 105
+  xy: 1791, 1150
   size: 123, 323
   orig: 123, 323
   offset: 0, 0
   index: -1
 tree_5_datetrees
   rotate: false
-  xy: 627, 2
+  xy: 4074, 2000
   size: 187, 244
   orig: 187, 244
   offset: 0, 0
   index: -1
 tree_6_datetrees
   rotate: false
-  xy: 3529, 482
+  xy: 7128, 2807
   size: 205, 255
   orig: 205, 255
+  offset: 0, 0
+  index: -1
+tree_9_datetrees
+  rotate: false
+  xy: 4993, 3651
+  size: 378, 443
+  orig: 378, 443
   offset: 0, 0
   index: -1
