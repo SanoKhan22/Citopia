@@ -54,3 +54,5 @@ coverage/
 # ===== Logs =====
 logs/
 *.log
+wiki.md
+.gradle-user-home/

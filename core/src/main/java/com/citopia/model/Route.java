@@ -1,32 +1,54 @@
 package com.citopia.model;
 
-public class Route {
-    private final City source;
-    private final City target;
-    private final float distance;
-    private final int costPerTick;
+import com.citopia.map.GridPoint;
 
-    public Route(City source, City target, int costPerTick) {
-        if (source == null || target == null) {
-            throw new IllegalArgumentException("Source and target cities cannot be null.");
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Represents a planned route between two cities.
+ */
+public class Route {
+
+    private final City origin;
+    private final City destination;
+    private final List<GridPoint> tilePath;
+    private final double distance;
+    private final double estimatedCost;
+
+    public Route(City origin, City destination, List<GridPoint> tilePath, double estimatedCost) {
+        this.origin = Objects.requireNonNull(origin, "Origin city cannot be null");
+        this.destination = Objects.requireNonNull(destination, "Destination city cannot be null");
+        this.tilePath = List.copyOf(Objects.requireNonNull(tilePath, "Tile path cannot be null"));
+
+        if (this.tilePath.isEmpty()) {
+            throw new IllegalArgumentException("Tile path cannot be empty");
         }
-        if (source.equals(target)) {
-            throw new IllegalArgumentException("Source and target cities cannot be the same.");
+        if (estimatedCost < 0) {
+            throw new IllegalArgumentException("Estimated cost cannot be negative");
         }
-        this.source = source;
-        this.target = target;
-        this.distance = source.distanceTo(target);
-        this.costPerTick = costPerTick;
+
+        this.distance = Math.max(0, this.tilePath.size() - 1);
+        this.estimatedCost = estimatedCost;
     }
 
-    public City getSource() { return source; }
-    public City getTarget() { return target; }
-    public float getDistance() { return distance; }
-    public int getCostPerTick() { return costPerTick; }
+    public City getOrigin() {
+        return origin;
+    }
 
-    @Override
-    public String toString() {
-        return String.format("Route{source=%s, target=%s, dist=%.1f, cost=%d}",
-                source.getName(), target.getName(), distance, costPerTick);
+    public City getDestination() {
+        return destination;
+    }
+
+    public List<GridPoint> getTilePath() {
+        return tilePath;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public double getEstimatedCost() {
+        return estimatedCost;
     }
 }

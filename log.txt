@@ -1,0 +1,20 @@
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :desktop:compileJava UP-TO-DATE
+> Task :desktop:processResources UP-TO-DATE
+> Task :desktop:classes UP-TO-DATE
+
+> Task :desktop:run
+[ALSOFT] (EE) Failed to set real-time priority for thread: Operation not permitted (1)
+[ALSOFT] (EE) Failed to set real-time priority for thread: Operation not permitted (1)
+Loaded icon for Jerusalem from images/cities/jerusalem.png
+Loaded icon for Tehran from images/cities/tehran.png
+Loaded icon for Cairo from images/cities/cairo.png
+Loaded icon for Baghdad from images/cities/baghdad.png
+Loaded icon for Damascus from images/cities/damascus.png
+Failed to load icon for Riyadh from images/cities/riyadh.png: Couldn't load file: images/cities/riyadh.png
+Failed to load icon for Doha from images/cities/doha.png: Couldn't load file: images/cities/doha.png
+Failed to load icon for Muscat from images/cities/muscat.png: Couldn't load file: images/cities/muscat.png
+Failed to load icon for Jeddah from images/cities/jeddah.png: Couldn't load file: images/cities/jeddah.png
