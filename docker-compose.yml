@@ -1,0 +1,29 @@
+services:
+  citopia-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    user: "root" # Needs root or specific group permissions for /dev/dri and /dev/snd
+    volumes:
+      - .:/workspace
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /dev/dri:/dev/dri
+    devices:
+      - /dev/snd:/dev/snd
+    environment:
+      - DISPLAY=${DISPLAY}
+    network_mode: "host"
+    stdin_open: true
+    tty: true
+    command: bash
+
+  citopia-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - .:/workspace
+    command: bash -lc "bash ./scripts/gradlew-docker.sh core:test"
