@@ -34,7 +34,7 @@ class GameStateTest {
         GameState state = new GameState(100);
         City a = new City("A", 0f, 0f, 1000);
         City b = new City("B", 3f, 4f, 1200);
-        Route route = new Route(a, b, 10);
+        Route route = new Route(a, b, List.of(new com.citopia.map.GridPoint(0,0), new com.citopia.map.GridPoint(3,4)), 10.0);
         Vehicle vehicle = new Vehicle("v1", "Truck", 2f, 20, a);
         Cargo cargo = new Cargo("c1", Cargo.CargoType.GOODS, 5, a, b);
 

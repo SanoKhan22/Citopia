@@ -1,7 +1,10 @@
 package com.citopia.model;
 
+import com.citopia.map.GridPoint;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,12 +16,12 @@ class RouteTest {
         City source = new City("A", 0f, 0f, 1000);
         City target = new City("B", 3f, 4f, 1500);
 
-        Route route = new Route(source, target, 20);
+        Route route = new Route(source, target, List.of(new GridPoint(0,0), new GridPoint(1,1), new GridPoint(2,2), new GridPoint(3,4)), 20.0);
 
-        assertSame(source, route.getSource());
-        assertSame(target, route.getTarget());
-        assertEquals(5f, route.getDistance(), 0.001f);
-        assertEquals(20, route.getCostPerTick());
+        assertSame(source, route.getOrigin());
+        assertSame(target, route.getDestination());
+        assertEquals(3f, route.getDistance(), 0.001f);
+        assertEquals(20.0, route.getEstimatedCost());
     }
 
     @Test
@@ -26,8 +29,8 @@ class RouteTest {
     void rejectsNullSource() {
         City target = new City("B", 3f, 4f, 1500);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> new Route(null, target, 5));
+        assertThrows(NullPointerException.class,
+                () -> new Route(null, target, List.of(new GridPoint(0,0), new GridPoint(1,1)), 5));
     }
 
     @Test
@@ -35,16 +38,29 @@ class RouteTest {
     void rejectsNullTarget() {
         City source = new City("A", 0f, 0f, 1000);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> new Route(source, null, 5));
+        assertThrows(NullPointerException.class,
+                () -> new Route(source, null, List.of(new GridPoint(0,0), new GridPoint(1,1)), 5));
     }
 
     @Test
     @DisplayName("Route rejects source and target as same object")
     void rejectsSameEndpoints() {
         City city = new City("A", 0f, 0f, 1000);
+    }
 
+    @Test
+    @DisplayName("Route rejects empty tile path")
+    void rejectsEmptyPath() {
+        City source = new City("A", 0f, 0f, 1000);
         assertThrows(IllegalArgumentException.class,
-                () -> new Route(city, city, 5));
+                () -> new Route(source, source, List.of(), 5));
+    }
+
+    @Test
+    @DisplayName("Route rejects negative cost")
+    void rejectsNegativeCost() {
+        City source = new City("A", 0f, 0f, 1000);
+        assertThrows(IllegalArgumentException.class,
+                () -> new Route(source, source, List.of(new GridPoint(0,0), new GridPoint(1,1)), -5));
     }
 }
