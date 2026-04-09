@@ -15,14 +15,16 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.citopia.CitopiaGame;
 import com.citopia.assets.AssetId;
+import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
+import com.citopia.world.ZoneType;
 import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
 
-    private static final int INHABITANT_HALF_SIZE = 20;
-    private static final int OASIS_HALF_WIDTH = 6;
+    // Oasis constants kept only for drawThreeExtraLakeTrees & drawStackedMountainStones
+    private static final int OASIS_HALF_WIDTH  = 6;
     private static final int OASIS_HALF_HEIGHT = 4;
     private static final int MINIMAP_SIZE_PX = 220;
     private static final int MINIMAP_PADDING_PX = 16;
@@ -73,6 +75,7 @@ public class GameScreen extends ScreenAdapter {
     private final TextureRegion woodenCartRegion;
     private final TextureRegion magicTowerRegion;
     private final TextureRegion windmillRegion;
+    private final TextureRegion fullRoadRegion;
     private final BitmapFont hudFont;
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
@@ -99,22 +102,26 @@ public class GameScreen extends ScreenAdapter {
         this.inhabitantGroundRegion = groundRegions[22];
         this.greenery6Region = safeRegion(AssetId.PROP_GREENERY_6, groundRegions[2]);
         this.greenery10Region = safeRegion(AssetId.PROP_GREENERY_10, greenery6Region);
-        this.stones1Region = safeRegion(AssetId.PROP_STONES_1, safeRegion(AssetId.TERRAIN_DESERT_STONE_1, greenery6Region));
+        this.stones1Region = safeRegion(AssetId.PROP_STONES_1,
+                safeRegion(AssetId.TERRAIN_DESERT_STONE_1, greenery6Region));
         this.stones4Region = safeRegion(AssetId.PROP_STONES_4, stones1Region);
         this.stones7Region = safeRegion(AssetId.PROP_STONES_7, stones1Region);
         this.bigStonesBase12Region = safeRegion(AssetId.PROP_BIGSTONES_BASE_12, stones1Region);
         this.bigStonesMid11Region = safeRegion(AssetId.PROP_BIGSTONES_MID_11, bigStonesBase12Region);
         this.bigStonesPeak10Region = safeRegion(AssetId.PROP_BIGSTONES_PEAK_10, bigStonesMid11Region);
         this.decor3Region = safeRegion(AssetId.PROP_DECOR_3, greenery10Region);
-        this.building1Region = safeRegion(AssetId.PROP_BUILDING_1, safeRegion(AssetId.PROP_CITY_HOUSE, greenery10Region));
+        this.building1Region = safeRegion(AssetId.PROP_BUILDING_1,
+                safeRegion(AssetId.PROP_CITY_HOUSE, greenery10Region));
         this.building2Region = safeRegion(AssetId.PROP_BUILDING_2, building1Region);
         this.building3Region = safeRegion(AssetId.PROP_BUILDING_3, building1Region);
         this.building4Region = safeRegion(AssetId.PROP_BUILDING_4, building3Region);
-        this.building5Region = safeRegion(AssetId.PROP_BUILDING_5, safeRegion(AssetId.PROP_CITY_HOUSE, building1Region));
+        this.building5Region = safeRegion(AssetId.PROP_BUILDING_5,
+                safeRegion(AssetId.PROP_CITY_HOUSE, building1Region));
         this.wellRegion = safeRegion(AssetId.PROP_WELL, building5Region);
         this.decor5Region = safeRegion(AssetId.PROP_DECOR_5, greenery10Region);
         this.tree8Region = safeRegion(AssetId.PROP_TREE_8, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
-        this.treeLargeRegion = safeRegion(AssetId.PROP_TREE_LARGE, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
+        this.treeLargeRegion = safeRegion(AssetId.PROP_TREE_LARGE,
+                safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
         this.houseRegion = safeRegion(AssetId.PROP_HOUSE_SUMMER, greenery10Region);
         this.castleSquareRegion = safeRegion(AssetId.PROP_CASTLE_SQUARE, greenery10Region);
         this.castleRoundRegion = safeRegion(AssetId.PROP_CASTLE_ROUND, greenery10Region);
@@ -133,6 +140,7 @@ public class GameScreen extends ScreenAdapter {
         this.woodenCartRegion = safeRegion(AssetId.VEHICLE_WOODEN_CART, rock01Region);
         this.magicTowerRegion = safeRegion(AssetId.PROP_MAGIC_TOWER, rock01Region);
         this.windmillRegion = safeRegion(AssetId.PROP_WINDMILL, houseRegion);
+        this.fullRoadRegion = game.assets.texture("full_Road.png");
 
         this.minimapPixmap = new Pixmap(tileMap.width(), tileMap.height(), Pixmap.Format.RGBA8888);
         buildMinimapPixmap();
@@ -147,8 +155,7 @@ public class GameScreen extends ScreenAdapter {
         camera.position.set(
                 (tileMap.width() * MapConfig.TILE_DRAW_SIZE) / 2f,
                 (tileMap.height() * MapConfig.TILE_DRAW_SIZE) / 2f,
-                0f
-        );
+                0f);
         camera.zoom = 2.0f;
         camera.update();
         viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), false);
@@ -235,8 +242,7 @@ public class GameScreen extends ScreenAdapter {
         camera.position.set(
                 (tileMap.width() * MapConfig.TILE_DRAW_SIZE) / 2f,
                 (tileMap.height() * MapConfig.TILE_DRAW_SIZE) / 2f,
-                0f
-        );
+                0f);
         camera.update();
     }
 
@@ -249,20 +255,17 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void applyMinimapColor(int x, int y) {
-        if (isOasisLakeTile(x, y)) {
-            minimapPixmap.setColor(0.16f, 0.47f, 0.70f, 1f);
-        } else if (isOasisStoneGapTile(x, y)) {
-            minimapPixmap.setColor(0.56f, 0.53f, 0.47f, 1f);
-        } else if (isAnyOasisTreeTile(x, y)) {
-            minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
-        } else if (isOasisGreeneryTile(x, y) && shouldPlaceOasisGreenery(x, y)) {
-            minimapPixmap.setColor(0.25f, 0.56f, 0.29f, 1f);
-        } else if (isInhabitantZone(x, y)) {
-            minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
-        } else {
-            minimapPixmap.setColor(0.84f, 0.64f, 0.39f, 1f);
+        ZoneType zone = tileMap.zone(x, y);
+        switch (zone) {
+            case OASIS_LAKE        -> minimapPixmap.setColor(0.16f, 0.47f, 0.70f, 1f);
+            case OASIS_STONE       -> minimapPixmap.setColor(0.56f, 0.53f, 0.47f, 1f);
+            case OASIS_TREE        -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
+            case OASIS_GREENERY    -> minimapPixmap.setColor(0.25f, 0.56f, 0.29f, 1f);
+            case LAKE_COAST_DECOR  -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
+            case CITY              -> minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
+            case ROAD              -> minimapPixmap.setColor(0.45f, 0.35f, 0.20f, 1f);
+            default                -> minimapPixmap.setColor(0.84f, 0.64f, 0.39f, 1f);
         }
-
         minimapPixmap.drawPixel(x, tileMap.height() - 1 - y);
     }
 
@@ -275,130 +278,11 @@ public class GameScreen extends ScreenAdapter {
         minimapTexture.draw(minimapPixmap, 0, 0);
     }
 
-    private boolean isInhabitantZone(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-        return Math.abs(x - midX) <= INHABITANT_HALF_SIZE
-            && Math.abs(y - midY) <= INHABITANT_HALF_SIZE;
-    }
-
-    private boolean isOasisLakeTile(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        float nx = (x - midX) / (float) OASIS_HALF_WIDTH;
-        float ny = (y - midY) / (float) OASIS_HALF_HEIGHT;
-        return nx * nx + ny * ny <= 1f;
-    }
-
-    private boolean isOasisGreeneryTile(int x, int y) {
-        if (isOasisLakeTile(x, y) || isOasisStoneGapTile(x, y) || isOasisTreeTile(x, y)) {
-            return false;
-        }
-
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        float nxOuter = (x - midX) / (float) (OASIS_HALF_WIDTH + 5);
-        float nyOuter = (y - midY) / (float) (OASIS_HALF_HEIGHT + 5);
-        float nxInner = (x - midX) / (float) (OASIS_HALF_WIDTH + 2);
-        float nyInner = (y - midY) / (float) (OASIS_HALF_HEIGHT + 2);
-
-        boolean inOuter = nxOuter * nxOuter + nyOuter * nyOuter <= 1f;
-        boolean inInnerBuffer = nxInner * nxInner + nyInner * nyInner <= 1f;
-        return inOuter && !inInnerBuffer;
-    }
-
-    private boolean isOasisStoneGapTile(int x, int y) {
-        if (isOasisLakeTile(x, y)) {
-            return false;
-        }
-
-        if (isLakeCoastDecorTile(x, y)) {
-            return false;
-        }
-
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        float nxOuter = (x - midX) / (float) (OASIS_HALF_WIDTH + 2);
-        float nyOuter = (y - midY) / (float) (OASIS_HALF_HEIGHT + 2);
-        float nxInner = (x - midX) / (float) (OASIS_HALF_WIDTH + 1);
-        float nyInner = (y - midY) / (float) (OASIS_HALF_HEIGHT + 1);
-
-        boolean nearLakeBand = (nxOuter * nxOuter + nyOuter * nyOuter <= 1f)
-            && (nxInner * nxInner + nyInner * nyInner > 1f);
-        if (!nearLakeBand) {
-            return false;
-        }
-
-        int noise = Math.floorMod((x * 43) ^ (y * 71), 100);
-        return noise < 55;
-    }
+    // ── Zone- and noise-based texture selectors (data-driven, not recomputed) ──
 
     private TextureRegion selectOasisStone(int x, int y) {
         int noise = Math.floorMod((x * 29) ^ (y * 83), 100);
         return noise < 50 ? stones1Region : stones7Region;
-    }
-
-    private boolean isLakeCoastDecorTile(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        return (x == midX - 2 && y == midY + OASIS_HALF_HEIGHT + 1)
-            || (x == midX + 2 && y == midY + OASIS_HALF_HEIGHT + 1)
-            || (x == midX && y == midY - OASIS_HALF_HEIGHT - 1);
-    }
-
-    private boolean isOasisTreeTile(int x, int y) {
-        if (isOasisLakeTile(x, y) || isOasisStoneGapTile(x, y) || isLakeCoastDecorTile(x, y)) {
-            return false;
-        }
-
-        if (isNearExtraLakeTreeTile(x, y)) {
-            return false;
-        }
-
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        float nxOuter = (x - midX) / (float) (OASIS_HALF_WIDTH + 3);
-        float nyOuter = (y - midY) / (float) (OASIS_HALF_HEIGHT + 3);
-        float nxInner = (x - midX) / (float) (OASIS_HALF_WIDTH + 1);
-        float nyInner = (y - midY) / (float) (OASIS_HALF_HEIGHT + 1);
-
-        boolean nearLakeBand = (nxOuter * nxOuter + nyOuter * nyOuter <= 1f)
-            && (nxInner * nxInner + nyInner * nyInner > 1f);
-        if (!nearLakeBand) {
-            return false;
-        }
-
-        int noise = Math.floorMod((x * 79) ^ (y * 41), 100);
-        return noise < 16;
-    }
-
-    private boolean isAnyOasisTreeTile(int x, int y) {
-        return isOasisTreeTile(x, y) || isExtraLakeTreeTile(x, y);
-    }
-
-    private boolean isExtraLakeTreeTile(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-
-        return (x == midX - (OASIS_HALF_WIDTH + 3) && y == midY + 1)
-            || (x == midX + (OASIS_HALF_WIDTH + 3) && y == midY)
-            || (x == midX && y == midY - (OASIS_HALF_HEIGHT + 4));
-    }
-
-    private boolean isNearExtraLakeTreeTile(int x, int y) {
-        for (int offsetY = -2; offsetY <= 2; offsetY++) {
-            for (int offsetX = -2; offsetX <= 2; offsetX++) {
-                if (isExtraLakeTreeTile(x + offsetX, y + offsetY)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private TextureRegion selectOasisTree(int x, int y) {
@@ -408,34 +292,7 @@ public class GameScreen extends ScreenAdapter {
 
     private TextureRegion selectOasisGreenery(int x, int y) {
         int noise = Math.floorMod((x * 67) ^ (y * 59), 100);
-        if (noise < 68) {
-            return greenery6Region;
-        }
-        return greenery10Region;
-    }
-
-    private boolean shouldPlaceOasisGreenery(int x, int y) {
-        if (isLakeCoastDecorTile(x, y)) {
-            return false;
-        }
-
-        if (isNearOasisTreeTile(x, y)) {
-            return false;
-        }
-
-        int noise = Math.floorMod((x * 37) ^ (y * 97), 100);
-        return noise < 34;
-    }
-
-    private boolean isNearOasisTreeTile(int x, int y) {
-        for (int offsetY = -1; offsetY <= 1; offsetY++) {
-            for (int offsetX = -1; offsetX <= 1; offsetX++) {
-                if (isAnyOasisTreeTile(x + offsetX, y + offsetY)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return noise < 68 ? greenery6Region : greenery10Region;
     }
 
     private void drawOasisFoliage(int x, int y, TextureRegion region) {
@@ -466,9 +323,9 @@ public class GameScreen extends ScreenAdapter {
         int midY = tileMap.height() / 2;
 
         int[][] extraTreeTiles = new int[][] {
-            {midX - (OASIS_HALF_WIDTH + 3), midY + 1},
-            {midX + (OASIS_HALF_WIDTH + 3), midY},
-            {midX, midY - (OASIS_HALF_HEIGHT + 4)}
+                { midX - (OASIS_HALF_WIDTH + 3), midY + 1 },
+                { midX + (OASIS_HALF_WIDTH + 3), midY },
+                { midX, midY - (OASIS_HALF_HEIGHT + 4) }
         };
 
         for (int[] tile : extraTreeTiles) {
@@ -494,8 +351,10 @@ public class GameScreen extends ScreenAdapter {
         float peakHeight = MapConfig.TILE_DRAW_SIZE * 4.3f;
 
         game.batch.draw(bigStonesBase12Region, anchorX, anchorY, baseWidth, baseHeight);
-        game.batch.draw(bigStonesMid11Region, anchorX + MapConfig.TILE_DRAW_SIZE * 0.8f, anchorY + MapConfig.TILE_DRAW_SIZE * 1.0f, midWidth, midHeight);
-        game.batch.draw(bigStonesPeak10Region, anchorX + MapConfig.TILE_DRAW_SIZE * 1.7f, anchorY + MapConfig.TILE_DRAW_SIZE * 1.9f, peakWidth, peakHeight);
+        game.batch.draw(bigStonesMid11Region, anchorX + MapConfig.TILE_DRAW_SIZE * 0.8f,
+                anchorY + MapConfig.TILE_DRAW_SIZE * 1.0f, midWidth, midHeight);
+        game.batch.draw(bigStonesPeak10Region, anchorX + MapConfig.TILE_DRAW_SIZE * 1.7f,
+                anchorY + MapConfig.TILE_DRAW_SIZE * 1.9f, peakWidth, peakHeight);
     }
 
     private void drawNorthCity() {
@@ -557,7 +416,8 @@ public class GameScreen extends ScreenAdapter {
         // Use a consistent random seed for village layout
         Random villageRandom = new Random(42L);
 
-        // Draw rocks first so they appear behind buildings and don't overlap them incorrectly
+        // Draw rocks first so they appear behind buildings and don't overlap them
+        // incorrectly
         Random rockRandom = new Random(123L);
         drawSouthVillageRocks(rockRandom, midX, housesBaseY, towersBaseY);
 
@@ -571,9 +431,11 @@ public class GameScreen extends ScreenAdapter {
         drawCityBuilding(castleSquareRegion, midX + 8.0f, towersBaseY, 4.0f, 4.0f);
 
         // Five houses spread across South-East to South-West, closer to oasis
-        // We limit X randomness to a strict range (+/- 0.6f) so they do not overlap each other
-        
-        // Add 2 Wells (Placed between/behind houses). Draw them FIRST so they stay behind.
+        // We limit X randomness to a strict range (+/- 0.6f) so they do not overlap
+        // each other
+
+        // Add 2 Wells (Placed between/behind houses). Draw them FIRST so they stay
+        // behind.
         drawCityBuilding(wellRegion, midX - 10.5f, housesBaseY + 2.5f, 1.8f, 1.8f);
         drawCityBuilding(wellRegion, midX + 10.5f, housesBaseY + 2.2f, 1.8f, 1.8f);
 
@@ -586,7 +448,7 @@ public class GameScreen extends ScreenAdapter {
         float house1X = midX + 13.0f + (villageRandom.nextFloat() * 1.2f - 0.6f);
         float house1Y = housesBaseY + 1.0f + (villageRandom.nextFloat() * 1.0f - 0.5f);
         drawCityBuilding(houseRegion, house1X, house1Y, 2.8f, 2.8f);
-        
+
         // House 4 (Mid-West)
         float house4X = midX - 10.0f + (villageRandom.nextFloat() * 1.2f - 0.6f);
         float house4Y = housesBaseY + 0.8f + (villageRandom.nextFloat() * 1.0f - 0.5f);
@@ -596,7 +458,7 @@ public class GameScreen extends ScreenAdapter {
         float house2X = midX + 8.5f + (villageRandom.nextFloat() * 1.2f - 0.6f);
         float house2Y = housesBaseY + 0.5f + (villageRandom.nextFloat() * 1.0f - 0.5f);
         drawCityBuilding(houseRegion, house2X, house2Y, 2.8f, 2.8f);
-        
+
         // House 3 (West-Center)
         float house3X = midX - 6.5f + (villageRandom.nextFloat() * 1.2f - 0.6f);
         float house3Y = housesBaseY + (villageRandom.nextFloat() * 1.0f - 0.5f);
@@ -618,14 +480,15 @@ public class GameScreen extends ScreenAdapter {
 
         drawCityBuilding(deadTree1Region, westCampX - 2.0f, westCampY + 3.0f, 2.5f, 3.5f);
         drawCityBuilding(decor8Region, westCampX + 3.0f, westCampY + 2.0f, 1.2f, 1.2f);
-        
-        // 3 Tents (Desert style) scattered around the campfire, with at least 1 tile spacing
+
+        // 3 Tents (Desert style) scattered around the campfire, with at least 1 tile
+        // spacing
         for (int i = 0; i < 3; i++) {
             float tentX = westCampX - 4.0f + (i * 3.5f) + (villageRandom.nextFloat() * 0.6f - 0.3f);
             float tentY = westCampY - 1.0f + (villageRandom.nextFloat() * 1.0f - 0.5f);
             drawCityBuilding(tentDesertRegion, tentX, tentY, 2.4f, 2.4f);
         }
-        
+
         drawCityBuilding(woodenCartRegion, westCampX + 1.5f, westCampY - 3.0f, 1.5f, 1.5f);
         drawCityBuilding(campfireRegion, westCampX, westCampY - 1.5f, 1.3f, 1.3f);
         drawCityBuilding(deadTree2Region, westCampX - 4.0f, westCampY - 4.0f, 2.0f, 3.0f);
@@ -637,14 +500,14 @@ public class GameScreen extends ScreenAdapter {
 
         drawCityBuilding(deadTree2Region, eastCampX + 1.0f, eastCampY + 3.5f, 2.5f, 3.5f);
         drawCityBuilding(decor8Region, eastCampX - 3.5f, eastCampY + 2.5f, 1.2f, 1.2f);
-        
+
         // 4 Tents (Standard style), with at least 1 tile spacing
         for (int i = 0; i < 4; i++) {
             float tentX = eastCampX - 5.5f + (i * 3.5f) + (villageRandom.nextFloat() * 0.6f - 0.3f);
             float tentY = eastCampY - 0.5f + (villageRandom.nextFloat() * 1.0f - 0.5f);
             drawCityBuilding(tentStandardRegion, tentX, tentY, 2.4f, 2.4f);
         }
-        
+
         drawCityBuilding(woodenCartRegion, eastCampX + 3.5f, eastCampY - 2.5f, 1.5f, 1.5f);
         drawCityBuilding(campfireRegion, eastCampX, eastCampY - 2.0f, 1.3f, 1.3f);
         drawCityBuilding(deadTree1Region, eastCampX - 3.5f, eastCampY - 3.5f, 2.0f, 3.0f);
@@ -667,7 +530,7 @@ public class GameScreen extends ScreenAdapter {
 
     private void drawSouthVillageRocks(Random villageRandom, int midX, float housesBaseY, float towersBaseY) {
         // Place rocks away from the center banner (-1.0f) and the main houses
-        float[] clusterX = {midX - 15.0f, midX - 5.0f, midX + 3.0f, midX + 13.0f};
+        float[] clusterX = { midX - 15.0f, midX - 5.0f, midX + 3.0f, midX + 13.0f };
         float centerBandY = (housesBaseY + towersBaseY) * 0.5f;
 
         for (float baseX : clusterX) {
@@ -708,23 +571,13 @@ public class GameScreen extends ScreenAdapter {
         game.batch.draw(region, drawX, drawY, width, height);
     }
 
-    private float inhabitantBlendAlpha(int x, int y) {
-        int midX = tileMap.width() / 2;
-        int midY = tileMap.height() / 2;
-        int distanceFromCenter = Math.max(Math.abs(x - midX), Math.abs(y - midY));
-
-        int fullyCityRadius = INHABITANT_HALF_SIZE - 4;
-        int fadeEndRadius = INHABITANT_HALF_SIZE + 8;
-
-        if (distanceFromCenter <= fullyCityRadius) {
-            return 1f;
+    /** Sum of all city blend alphas at a tile — used for city ground rendering. */
+    private float cityBlendAlpha(int x, int y) {
+        float alpha = 0f;
+        for (CitySite city : tileMap.cities()) {
+            alpha = Math.max(alpha, city.blendAlpha(x, y));
         }
-        if (distanceFromCenter >= fadeEndRadius) {
-            return 0f;
-        }
-
-        float t = (distanceFromCenter - fullyCityRadius) / (float) (fadeEndRadius - fullyCityRadius);
-        return 1f - t;
+        return Math.min(1f, alpha);
     }
 
     @Override
@@ -741,12 +594,14 @@ public class GameScreen extends ScreenAdapter {
 
         int startTileX = Math.max(0, (int) ((camera.position.x - halfWorldWidth) / MapConfig.TILE_DRAW_SIZE) - 1);
         int startTileY = Math.max(0, (int) ((camera.position.y - halfWorldHeight) / MapConfig.TILE_DRAW_SIZE) - 1);
-        int endTileX = Math.min(tileMap.width() - 1, (int) ((camera.position.x + halfWorldWidth) / MapConfig.TILE_DRAW_SIZE) + 1);
-        int endTileY = Math.min(tileMap.height() - 1, (int) ((camera.position.y + halfWorldHeight) / MapConfig.TILE_DRAW_SIZE) + 1);
+        int endTileX = Math.min(tileMap.width() - 1,
+                (int) ((camera.position.x + halfWorldWidth) / MapConfig.TILE_DRAW_SIZE) + 1);
+        int endTileY = Math.min(tileMap.height() - 1,
+                (int) ((camera.position.y + halfWorldHeight) / MapConfig.TILE_DRAW_SIZE) + 1);
 
         game.batch.begin();
 
-        // Layer 1: Ground + center city fade blend
+        // Layer 1: Desert base + city ground fade (all cities at once)
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
@@ -755,67 +610,59 @@ public class GameScreen extends ScreenAdapter {
                 game.batch.setColor(1f, 1f, 1f, 1f);
                 game.batch.draw(desertSandRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
 
-                float blendAlpha = inhabitantBlendAlpha(x, y);
+                float blendAlpha = cityBlendAlpha(x, y);
                 if (blendAlpha > 0f) {
                     game.batch.setColor(1f, 1f, 1f, blendAlpha);
-                    game.batch.draw(inhabitantGroundRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+                    game.batch.draw(inhabitantGroundRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE,
+                            MapConfig.TILE_DRAW_SIZE);
                 }
             }
         }
         game.batch.setColor(1f, 1f, 1f, 1f);
 
-        // Layer 2: Oasis lake (center)
+        // Layer 2: Oasis lake
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isOasisLakeTile(x, y)) {
-                    continue;
-                }
+                if (tileMap.zone(x, y) != ZoneType.OASIS_LAKE) continue;
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
                 float drawY = y * MapConfig.TILE_DRAW_SIZE;
                 game.batch.draw(oasisLakeRegion, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
             }
         }
 
-        // Layer 3: Near-lake stone gaps (stones_1 + stones_7)
+        // Layer 3: Oasis stone gaps
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isOasisStoneGapTile(x, y)) {
-                    continue;
-                }
+                if (tileMap.zone(x, y) != ZoneType.OASIS_STONE) continue;
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
                 float drawY = y * MapConfig.TILE_DRAW_SIZE;
-                game.batch.draw(selectOasisStone(x, y), drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+                game.batch.draw(selectOasisStone(x, y), drawX, drawY, MapConfig.TILE_DRAW_SIZE,
+                        MapConfig.TILE_DRAW_SIZE);
             }
         }
 
-        // Layer 3b: Coastline decor_5 linked to lake edges
+        // Layer 3b: Lake coast decor
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isLakeCoastDecorTile(x, y)) {
-                    continue;
-                }
+                if (tileMap.zone(x, y) != ZoneType.LAKE_COAST_DECOR) continue;
                 float drawX = x * MapConfig.TILE_DRAW_SIZE;
                 float drawY = y * MapConfig.TILE_DRAW_SIZE;
                 game.batch.draw(decor5Region, drawX, drawY, MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
             }
         }
 
-        // Layer 4: Oasis greenery ring (strict local placement)
+        // Layer 4: Oasis greenery ring
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isOasisGreeneryTile(x, y) || !shouldPlaceOasisGreenery(x, y)) {
-                    continue;
-                }
+                if (tileMap.zone(x, y) != ZoneType.OASIS_GREENERY) continue;
                 drawOasisFoliage(x, y, selectOasisGreenery(x, y));
             }
         }
 
-        // Layer 5: Sparse trees near lake edge (drawn last to avoid shrub overlap)
+        // Layer 5: Oasis trees
         for (int y = startTileY; y <= endTileY; y++) {
             for (int x = startTileX; x <= endTileX; x++) {
-                if (!isOasisTreeTile(x, y)) {
-                    continue;
-                }
+                if (tileMap.zone(x, y) != ZoneType.OASIS_TREE) continue;
                 drawOasisFoliage(x, y, selectOasisTree(x, y));
             }
         }
@@ -924,7 +771,7 @@ public class GameScreen extends ScreenAdapter {
         float dyTiles = dy / MapConfig.TILE_DRAW_SIZE;
         String direction = directionToCenter(dxTiles, dyTiles);
 
-        if (distanceTiles > INHABITANT_HALF_SIZE) {
+        if (distanceTiles > CitySite.CORE_HALF_SIZE) {
             String text = "City Zone: " + distanceTiles + " tiles " + direction;
             hudFont.draw(game.batch, text, minimapX, minimapY - 12f);
         } else {
