@@ -15,6 +15,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.citopia.CitopiaGame;
 import com.citopia.assets.AssetId;
+import com.citopia.model.PlayerState;
 import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
@@ -80,7 +81,12 @@ public class GameScreen extends ScreenAdapter {
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
     private final Texture hudPixel;
+    private final BitmapFont goldFont;   // slightly larger font for gold counter
     private float pendingScrollY;
+
+    // Economy: in-game time accumulator (1 month = 30 real seconds at normal speed)
+    private static final float MONTH_DURATION_SECONDS = 30f;
+    private float monthTimer = 0f;
 
     public GameScreen(CitopiaGame game) {
         this.game = game;
@@ -151,6 +157,10 @@ public class GameScreen extends ScreenAdapter {
         pixelPixmap.fill();
         this.hudPixel = new Texture(pixelPixmap);
         pixelPixmap.dispose();
+
+        this.goldFont = new BitmapFont();
+        this.goldFont.getData().setScale(1.4f);
+        this.goldFont.setColor(1f, 0.87f, 0.27f, 1f); // warm gold colour
 
         camera.position.set(
                 (tileMap.width() * MapConfig.TILE_DRAW_SIZE) / 2f,
@@ -583,6 +593,14 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         handleInput(delta);
+
+        // Advance in-game calendar
+        monthTimer += delta;
+        if (monthTimer >= MONTH_DURATION_SECONDS) {
+            monthTimer -= MONTH_DURATION_SECONDS;
+            game.playerState.tick(tileMap.cities().size());
+        }
+
         camera.update();
 
         ScreenUtils.clear(0.08f, 0.12f, 0.10f, 1f);
@@ -778,6 +796,52 @@ public class GameScreen extends ScreenAdapter {
             hudFont.draw(game.batch, "City Zone: inside", minimapX, minimapY - 12f);
         }
 
+        // ── Gold / Economy HUD (top-right) ────────────────────────────────────
+        PlayerState ps = game.playerState;
+        int screenW = Gdx.graphics.getWidth();
+        int screenH = Gdx.graphics.getHeight();
+
+        // Dark pill background
+        float panelW = 230f;
+        float panelH = 52f;
+        float panelX = screenW - panelW - MINIMAP_PADDING_PX;
+        float panelY = screenH - panelH - MINIMAP_PADDING_PX;
+
+        game.batch.setColor(0.08f, 0.08f, 0.08f, 0.78f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        // Gold border
+        float brd = 1.5f;
+        game.batch.setColor(0.80f, 0.65f, 0.10f, 0.90f);
+        game.batch.draw(hudPixel, panelX,              panelY,              panelW, brd);     // bottom
+        game.batch.draw(hudPixel, panelX,              panelY + panelH - brd, panelW, brd);  // top
+        game.batch.draw(hudPixel, panelX,              panelY,              brd, panelH);     // left
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY,           brd, panelH);     // right
+
+        // Coin dot
+        float dotSize = 10f;
+        game.batch.setColor(1f, 0.87f, 0.27f, 1f);
+        game.batch.draw(hudPixel, panelX + 10f, panelY + (panelH - dotSize) / 2f, dotSize, dotSize);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+
+        // Gold amount
+        String goldText = ps.formattedGold() + " g";
+        goldFont.setColor(ps.getGold() >= 0 ? new Color(1f, 0.87f, 0.27f, 1f)
+                                            : new Color(1f, 0.25f, 0.25f, 1f));
+        goldFont.draw(game.batch, goldText,
+                panelX + 26f,
+                panelY + panelH - 10f);
+
+        // Year / Month line
+        hudFont.setColor(0.72f, 0.72f, 0.72f, 1f);
+        String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun",
+                               "Jul","Aug","Sep","Oct","Nov","Dec"};
+        String dateText = "Year " + ps.getYear() + " - " + monthNames[ps.getMonth() - 1];
+        hudFont.draw(game.batch, dateText,
+                panelX + 26f,
+                panelY + 18f);
+        hudFont.setColor(Color.WHITE);
+
         game.batch.end();
     }
 
@@ -801,6 +865,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void dispose() {
         hudFont.dispose();
+        goldFont.dispose();
         minimapTexture.dispose();
         minimapPixmap.dispose();
         hudPixel.dispose();

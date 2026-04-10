@@ -3,6 +3,7 @@ package com.citopia;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.citopia.assets.AssetRegistry;
+import com.citopia.model.PlayerState;
 import com.citopia.view.GameScreen;
 
 /**
@@ -13,11 +14,14 @@ public class CitopiaGame extends Game {
 
     public SpriteBatch batch;
     public AssetRegistry assets;
+    /** Issue #24 – shared player economy state used by all screens. */
+    public PlayerState playerState;
 
     @Override
     public void create() {
-        batch = new SpriteBatch();
-        assets = new AssetRegistry();
+        batch       = new SpriteBatch();
+        assets      = new AssetRegistry();
+        playerState = new PlayerState();
         setScreen(new GameScreen(this));
     }
 
