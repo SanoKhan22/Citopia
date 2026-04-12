@@ -24,12 +24,21 @@ import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
 
+    // ── Build modes ──────────────────────────────────────────────
+    private enum BuildMode { POINTER, ROAD, DEMOLISH }
+
     // Oasis constants kept only for drawThreeExtraLakeTrees & drawStackedMountainStones
     private static final int OASIS_HALF_WIDTH  = 6;
     private static final int OASIS_HALF_HEIGHT = 4;
-    private static final int MINIMAP_SIZE_PX = 220;
+    private static final int MINIMAP_SIZE_PX    = 220;
     private static final int MINIMAP_PADDING_PX = 16;
     private static final float MINIMAP_MARKER_SIZE = 4f;
+
+    // Toolbar layout constants
+    private static final float BTN_W    = 110f;
+    private static final float BTN_H    = 44f;
+    private static final float BTN_GAP  = 6f;
+    private static final float TOOLBAR_PADDING = 8f;
 
     private final CitopiaGame game;
     private final OrthographicCamera camera;
@@ -83,6 +92,15 @@ public class GameScreen extends ScreenAdapter {
     private final Texture hudPixel;
     private final BitmapFont goldFont;   // slightly larger font for gold counter
     private float pendingScrollY;
+
+    // ── Build menu state ─────────────────────────────────────────
+    private BuildMode buildMode = BuildMode.POINTER;
+    private int hoverTileX = -1;   // world tile the mouse is over
+    private int hoverTileY = -1;
+    /** Feedback message shown bottom-centre (e.g. "Not enough gold!"). Fades over time. */
+    private String feedbackMsg  = "";
+    private float  feedbackTimer = 0f;
+    private static final float FEEDBACK_DURATION = 2.5f;
 
     // Economy: in-game time accumulator (1 month = 30 real seconds at normal speed)
     private static final float MONTH_DURATION_SECONDS = 30f;
@@ -181,10 +199,48 @@ public class GameScreen extends ScreenAdapter {
     public void show() {
         centerCameraOnCityZone();
         Gdx.input.setInputProcessor(new InputAdapter() {
+
             @Override
             public boolean scrolled(float amountX, float amountY) {
                 pendingScrollY += amountY;
                 return true;
+            }
+
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                if (button == Input.Buttons.LEFT) {
+                    // Check toolbar button clicks first
+                    if (handleToolbarClick(screenX, screenY)) return true;
+                    // Otherwise handle world-tile action
+                    handleWorldClick(screenX, screenY);
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean mouseMoved(int screenX, int screenY) {
+                updateHoverTile(screenX, screenY);
+                return false;
+            }
+
+            @Override
+            public boolean touchDragged(int screenX, int screenY, int pointer) {
+                // Allow painting roads by dragging in ROAD mode
+                if (buildMode == BuildMode.ROAD) {
+                    handleWorldClick(screenX, screenY);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean keyDown(int keycode) {
+                switch (keycode) {
+                    case Input.Keys.R -> buildMode = BuildMode.ROAD;
+                    case Input.Keys.X -> buildMode = BuildMode.DEMOLISH;
+                    case Input.Keys.ESCAPE -> buildMode = BuildMode.POINTER;
+                }
+                return false;
             }
         });
     }
@@ -238,6 +294,80 @@ public class GameScreen extends ScreenAdapter {
 
     private float clamp(float value, float min, float max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    // ── Build-mode helpers ─────────────────────────────────────────
+
+    /** Convert screen coords to world tile and update hover state. */
+    private void updateHoverTile(int screenX, int screenY) {
+        com.badlogic.gdx.math.Vector3 world = new com.badlogic.gdx.math.Vector3(screenX, screenY, 0);
+        camera.unproject(world);
+        hoverTileX = (int) (world.x / MapConfig.TILE_DRAW_SIZE);
+        hoverTileY = (int) (world.y / MapConfig.TILE_DRAW_SIZE);
+    }
+
+    /**
+     * Returns true if a toolbar button was clicked, consuming the event.
+     * Toolbar is bottom-centre of screen.
+     */
+    private boolean handleToolbarClick(int screenX, int screenY) {
+        // Convert to LibGDX y-up screen coords
+        int gdxY = Gdx.graphics.getHeight() - screenY;
+        BuildMode[] modes = { BuildMode.POINTER, BuildMode.ROAD, BuildMode.DEMOLISH };
+        for (int i = 0; i < modes.length; i++) {
+            float bx = toolbarButtonX(i);
+            float by = TOOLBAR_PADDING;
+            if (screenX >= bx && screenX <= bx + BTN_W && gdxY >= by && gdxY <= by + BTN_H) {
+                buildMode = modes[i];
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Place/demolish a tile when the player clicks the world. */
+    private void handleWorldClick(int screenX, int screenY) {
+        updateHoverTile(screenX, screenY);
+        int tx = hoverTileX;
+        int ty = hoverTileY;
+        if (!tileMap.inBounds(tx, ty)) return;
+
+        switch (buildMode) {
+            case ROAD -> {
+                if (tileMap.hasRoad(tx, ty)) return; // already a road
+                if (!game.playerState.canAfford(PlayerState.COST_ROAD)) {
+                    showFeedback("Not enough gold! (need " + PlayerState.COST_ROAD + "g)");
+                    return;
+                }
+                game.playerState.spend(PlayerState.COST_ROAD);
+                tileMap.placeRoad(tx, ty);
+                refreshMinimapTile(tx, ty);
+            }
+            case DEMOLISH -> {
+                if (!tileMap.hasRoad(tx, ty)) return; // nothing to demolish
+                if (!game.playerState.canAfford(PlayerState.COST_DEMOLISH)) {
+                    showFeedback("Not enough gold! (need " + PlayerState.COST_DEMOLISH + "g)");
+                    return;
+                }
+                game.playerState.spend(PlayerState.COST_DEMOLISH);
+                tileMap.removeRoad(tx, ty);
+                refreshMinimapTile(tx, ty);
+            }
+            default -> { /* POINTER – no action */ }
+        }
+    }
+
+    private void showFeedback(String msg) {
+        feedbackMsg   = msg;
+        feedbackTimer = FEEDBACK_DURATION;
+    }
+
+    /** X position of the i-th toolbar button (in screen / HUD coordinates). */
+    private float toolbarButtonX(int index) {
+        int btnCount = 3;
+        float totalW = btnCount * BTN_W + (btnCount - 1) * BTN_GAP;
+        float startX = (Gdx.graphics.getWidth() - totalW) / 2f;
+        return startX + index * (BTN_W + BTN_GAP);
     }
 
     private TextureRegion safeRegion(AssetId assetId, TextureRegion fallback) {
@@ -590,6 +720,49 @@ public class GameScreen extends ScreenAdapter {
         return Math.min(1f, alpha);
     }
 
+    // ── Road tile rendering ─────────────────────────────────────────
+
+    private void drawRoads(int startTileX, int endTileX, int startTileY, int endTileY) {
+        for (int y = startTileY; y <= endTileY; y++) {
+            for (int x = startTileX; x <= endTileX; x++) {
+                if (!tileMap.hasRoad(x, y)) continue;
+                float drawX = x * MapConfig.TILE_DRAW_SIZE;
+                float drawY = y * MapConfig.TILE_DRAW_SIZE;
+                game.batch.draw(fullRoadRegion, drawX, drawY,
+                        MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
+            }
+        }
+    }
+
+    // ── Hover tile highlight ────────────────────────────────────────
+
+    private void drawHoverHighlight() {
+        if (buildMode == BuildMode.POINTER) return;
+        if (!tileMap.inBounds(hoverTileX, hoverTileY)) return;
+
+        float drawX = hoverTileX * MapConfig.TILE_DRAW_SIZE;
+        float drawY = hoverTileY * MapConfig.TILE_DRAW_SIZE;
+        float s     = MapConfig.TILE_DRAW_SIZE;
+        float brd   = 2f;
+
+        // Choose highlight colour by mode + affordability
+        if (buildMode == BuildMode.ROAD) {
+            boolean canAfford = game.playerState.canAfford(PlayerState.COST_ROAD);
+            game.batch.setColor(canAfford ? 0.2f : 0.9f,
+                                canAfford ? 0.9f : 0.2f,
+                                0.2f, 0.65f);
+        } else { // DEMOLISH
+            game.batch.setColor(0.95f, 0.25f, 0.25f, 0.65f);
+        }
+
+        // Draw border around tile using hudPixel
+        game.batch.draw(hudPixel, drawX,           drawY,       s,   brd);  // bottom
+        game.batch.draw(hudPixel, drawX,           drawY + s - brd, s, brd); // top
+        game.batch.draw(hudPixel, drawX,           drawY,       brd, s);    // left
+        game.batch.draw(hudPixel, drawX + s - brd, drawY,       brd, s);    // right
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
     @Override
     public void render(float delta) {
         handleInput(delta);
@@ -685,6 +858,12 @@ public class GameScreen extends ScreenAdapter {
             }
         }
 
+        // Layer 6: Roads (player placed)
+        drawRoads(startTileX, endTileX, startTileY, endTileY);
+
+        // Layer 7: Hover tile highlight (drawn in world space before buildings)
+        drawHoverHighlight();
+
         // Layer 5b: Add exactly three extra big trees around the lake
         drawThreeExtraLakeTrees();
 
@@ -708,7 +887,7 @@ public class GameScreen extends ScreenAdapter {
         game.batch.end();
 
         // Draw HUD for direction
-        drawHUD();
+        drawHUD(delta);
     }
 
     private void drawDirectionalPlanners() {
@@ -734,7 +913,7 @@ public class GameScreen extends ScreenAdapter {
         hudFont.getData().setScale(1.1f); // Reset to HUD scale
     }
 
-    private void drawHUD() {
+    private void drawHUD(float delta) {
         Matrix4 uiMatrix = new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         game.batch.setProjectionMatrix(uiMatrix);
         game.batch.begin();
@@ -842,7 +1021,73 @@ public class GameScreen extends ScreenAdapter {
                 panelY + 18f);
         hudFont.setColor(Color.WHITE);
 
+        // ── Bottom Toolbar (Build Menu) ────────────────────────────────
+        drawToolbar();
+
+        // ── Feedback message (centre-bottom) ───────────────────────────
+        if (feedbackTimer > 0f) {
+            feedbackTimer -= delta;
+            float alpha = Math.min(1f, feedbackTimer / 0.5f);
+            hudFont.setColor(1f, 0.35f, 0.35f, alpha);
+            com.badlogic.gdx.graphics.g2d.GlyphLayout layout = new com.badlogic.gdx.graphics.g2d.GlyphLayout(hudFont, feedbackMsg);
+            float fx = (Gdx.graphics.getWidth() - layout.width) / 2f;
+            float fy = BTN_H + TOOLBAR_PADDING * 2 + 28f;
+            hudFont.draw(game.batch, feedbackMsg, fx, fy);
+            hudFont.setColor(Color.WHITE);
+        }
+
         game.batch.end();
+    }
+
+    // ── Toolbar drawing ──────────────────────────────────────────
+
+    private void drawToolbar() {
+        String[] labels = { "[Esc] Pointer", "[R] Road", "[X] Demolish" };
+        int[]    costs  = { 0, PlayerState.COST_ROAD, PlayerState.COST_DEMOLISH };
+        BuildMode[] modes = { BuildMode.POINTER, BuildMode.ROAD, BuildMode.DEMOLISH };
+
+        for (int i = 0; i < modes.length; i++) {
+            float bx = toolbarButtonX(i);
+            float by = TOOLBAR_PADDING;
+            boolean active = buildMode == modes[i];
+            boolean affordable = costs[i] == 0 || game.playerState.canAfford(costs[i]);
+
+            // Background
+            if (active) {
+                game.batch.setColor(0.20f, 0.20f, 0.20f, 0.95f);
+            } else {
+                game.batch.setColor(0.10f, 0.10f, 0.10f, 0.80f);
+            }
+            game.batch.draw(hudPixel, bx, by, BTN_W, BTN_H);
+
+            // Border: gold if active, grey otherwise
+            float brd = 1.5f;
+            if (active) {
+                game.batch.setColor(0.85f, 0.70f, 0.15f, 1f);
+            } else if (!affordable) {
+                game.batch.setColor(0.70f, 0.20f, 0.20f, 0.85f);
+            } else {
+                game.batch.setColor(0.40f, 0.40f, 0.40f, 0.70f);
+            }
+            game.batch.draw(hudPixel, bx,              by,              BTN_W, brd);
+            game.batch.draw(hudPixel, bx,              by + BTN_H - brd, BTN_W, brd);
+            game.batch.draw(hudPixel, bx,              by,              brd,   BTN_H);
+            game.batch.draw(hudPixel, bx + BTN_W - brd, by,            brd,   BTN_H);
+            game.batch.setColor(1f, 1f, 1f, 1f);
+
+            // Label
+            hudFont.setColor(active ? new Color(1f, 0.87f, 0.27f, 1f)
+                    : (affordable ? Color.WHITE : new Color(0.7f, 0.3f, 0.3f, 1f)));
+            hudFont.draw(game.batch, labels[i], bx + 8f, by + BTN_H - 10f);
+
+            // Cost sub-label
+            if (costs[i] > 0) {
+                hudFont.setColor(affordable ? new Color(0.6f, 0.9f, 0.6f, 1f)
+                                           : new Color(0.85f, 0.3f, 0.3f, 1f));
+                hudFont.draw(game.batch, costs[i] + "g / tile", bx + 8f, by + BTN_H - 26f);
+            }
+            hudFont.setColor(Color.WHITE);
+        }
     }
 
     private String directionToCenter(float dxTiles, float dyTiles) {

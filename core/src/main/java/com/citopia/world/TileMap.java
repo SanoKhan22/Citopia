@@ -78,6 +78,16 @@ public class TileMap {
         }
     }
 
+    /** Remove a road tile (demolish action). */
+    public void removeRoad(int x, int y) {
+        if (inBounds(x, y) && roadData[index(x, y)]) {
+            roadData[index(x, y)] = false;
+            // Revert zone to what it was before road — repaint via MapGenerator
+            zoneData[index(x, y)] = ZoneType.CITY; // safe default (desert cities blend anyway)
+        }
+    }
+
+
     /** Register a city site so the map is aware of its boundaries. */
     public void addCity(CitySite city) {
         cities.add(city);
