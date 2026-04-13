@@ -85,7 +85,8 @@ public class GameScreen extends ScreenAdapter {
     private final TextureRegion woodenCartRegion;
     private final TextureRegion magicTowerRegion;
     private final TextureRegion windmillRegion;
-    private final TextureRegion fullRoadRegion;
+    private final TextureRegion roadRegion;      // raw road sprite (full_Road.png)
+    private final RoadRenderer  roadRenderer;    // auto-tiling road renderer
     private final BitmapFont hudFont;
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
@@ -164,7 +165,8 @@ public class GameScreen extends ScreenAdapter {
         this.woodenCartRegion = safeRegion(AssetId.VEHICLE_WOODEN_CART, rock01Region);
         this.magicTowerRegion = safeRegion(AssetId.PROP_MAGIC_TOWER, rock01Region);
         this.windmillRegion = safeRegion(AssetId.PROP_WINDMILL, houseRegion);
-        this.fullRoadRegion = game.assets.texture("full_Road.png");
+        this.roadRegion     = game.assets.texture("full_Road.png");
+        this.roadRenderer   = new RoadRenderer(roadRegion, tileMap);
 
         this.minimapPixmap = new Pixmap(tileMap.width(), tileMap.height(), Pixmap.Format.RGBA8888);
         buildMinimapPixmap();
@@ -722,16 +724,9 @@ public class GameScreen extends ScreenAdapter {
 
     // ── Road tile rendering ─────────────────────────────────────────
 
+    /** Delegate to auto-tiling RoadRenderer. */
     private void drawRoads(int startTileX, int endTileX, int startTileY, int endTileY) {
-        for (int y = startTileY; y <= endTileY; y++) {
-            for (int x = startTileX; x <= endTileX; x++) {
-                if (!tileMap.hasRoad(x, y)) continue;
-                float drawX = x * MapConfig.TILE_DRAW_SIZE;
-                float drawY = y * MapConfig.TILE_DRAW_SIZE;
-                game.batch.draw(fullRoadRegion, drawX, drawY,
-                        MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE);
-            }
-        }
+        roadRenderer.drawRoads(game.batch, startTileX, endTileX, startTileY, endTileY);
     }
 
     // ── Hover tile highlight ────────────────────────────────────────
