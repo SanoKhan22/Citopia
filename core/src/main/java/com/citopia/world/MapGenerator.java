@@ -32,6 +32,98 @@ public final class MapGenerator {
 
         // 3. Paint central oasis
         paintOasis(map, midX, midY);
+
+        // 4. Lay permanent road network (capital <-> 4 outer cities)
+        buildPresetRoadNetwork(map);
+    }
+
+    // ── Preset road network ───────────────────────────────────────────────────
+
+    /**
+     * Draws permanent 3-tile-wide roads connecting the capital to each outer city.
+     * Capital → North : straight vertical corridor
+     * Capital → South : straight vertical corridor
+     * Capital → East  : straight horizontal corridor
+     * Capital → West  : straight horizontal corridor
+     *
+     * Roads start/end at the CORE_HALF_SIZE boundary of each city so they
+     * don't overwrite the city core zone tiles.
+     */
+    private static void buildPresetRoadNetwork(TileMap map) {
+        CitySite capital = map.capital();
+        if (capital == null) return;
+
+        int capX = capital.centerX;
+        int capY = capital.centerY;
+        int half = CitySite.CORE_HALF_SIZE; // road starts/ends at city core edge
+
+        for (CitySite city : map.cities()) {
+            if (city.type == CitySite.CityType.CAPITAL) continue;
+
+            int cx = city.centerX;
+            int cy = city.centerY;
+
+            switch (city.type) {
+                case NORTH:
+                    // Vertical corridor: capital top edge → south edge of North City
+                    drawRoadCorridor(map, capX, capY + half + 1, capX, cy - half - 1,
+                                     true /*vertical*/, 3 /*width*/);
+                    break;
+                case SOUTH:
+                    // Vertical corridor: capital bottom edge → north edge of South City
+                    drawRoadCorridor(map, capX, capY - half - 1, capX, cy + half + 1,
+                                     true, 3);
+                    break;
+                case EAST:
+                    // Horizontal corridor: capital right edge → west edge of East City
+                    drawRoadCorridor(map, capX + half + 1, capY, cx - half - 1, capY,
+                                     false /*horizontal*/, 3);
+                    break;
+                case WEST:
+                    // Horizontal corridor: capital left edge → east edge of West City
+                    drawRoadCorridor(map, capX - half - 1, capY, cx + half + 1, capY,
+                                     false, 3);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Paints an axis-aligned corridor of permanent road tiles.
+     *
+     * @param vertical  true = north/south corridor, false = east/west corridor
+     * @param roadWidth number of parallel tiles wide (centred on the axis)
+     */
+    private static void drawRoadCorridor(TileMap map,
+                                          int x1, int y1, int x2, int y2,
+                                          boolean vertical, int roadWidth) {
+        // Normalise direction
+        int fromX = Math.min(x1, x2);
+        int toX   = Math.max(x1, x2);
+        int fromY = Math.min(y1, y2);
+        int toY   = Math.max(y1, y2);
+
+        int spread = roadWidth / 2; // half-width offset (1 for width=3)
+
+        if (vertical) {
+            // Fixed X column (with spread), iterate Y
+            int axisX = x1; // the centre column
+            for (int y = fromY; y <= toY; y++) {
+                for (int dx = -spread; dx <= spread; dx++) {
+                    map.placeRoadPermanent(axisX + dx, y);
+                }
+            }
+        } else {
+            // Fixed Y row (with spread), iterate X
+            int axisY = y1; // the centre row
+            for (int x = fromX; x <= toX; x++) {
+                for (int dy = -spread; dy <= spread; dy++) {
+                    map.placeRoadPermanent(x, axisY + dy);
+                }
+            }
+        }
     }
 
     // ── City registration ─────────────────────────────────────────────────────

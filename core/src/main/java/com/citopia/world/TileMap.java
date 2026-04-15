@@ -10,9 +10,10 @@ public class TileMap {
     private final int width;
     private final int height;
     private final byte[] groundTileIndices;
-    private final ZoneType[] zoneData;   // pre-computed by MapGenerator
-    private final boolean[] roadData;   // true = player placed a road here
-    private final List<CitySite> cities; // all city sites (capital + outer)
+    private final ZoneType[] zoneData;        // pre-computed by MapGenerator
+    private final boolean[] roadData;          // true = road exists here
+    private final boolean[] permanentRoadData; // true = road cannot be demolished
+    private final List<CitySite> cities;       // all city sites (capital + outer)
 
     public TileMap(int width, int height, long seed) {
         this.width = width;
@@ -20,6 +21,7 @@ public class TileMap {
         this.groundTileIndices = new byte[width * height];
         this.zoneData = new ZoneType[width * height];
         this.roadData = new boolean[width * height];
+        this.permanentRoadData = new boolean[width * height];
         this.cities = new ArrayList<>();
 
         // Fill ground tile indices with random variants
@@ -52,6 +54,11 @@ public class TileMap {
         return roadData[index(x, y)];
     }
 
+    /** Returns true if this tile has a permanent (non-demolishable) road. */
+    public boolean isPermanentRoad(int x, int y) {
+        return permanentRoadData[index(x, y)];
+    }
+
     public List<CitySite> cities() {
         return Collections.unmodifiableList(cities);
     }
@@ -70,7 +77,7 @@ public class TileMap {
         if (inBounds(x, y)) zoneData[index(x, y)] = type;
     }
 
-    /** Place a road tile (player action). */
+    /** Place a player-built road tile. */
     public void placeRoad(int x, int y) {
         if (inBounds(x, y)) {
             roadData[index(x, y)] = true;
@@ -78,12 +85,23 @@ public class TileMap {
         }
     }
 
-    /** Remove a road tile (demolish action). */
+    /**
+     * Place a permanent road tile (called by MapGenerator for preset network).
+     * Permanent roads cannot be demolished by the player.
+     */
+    public void placeRoadPermanent(int x, int y) {
+        if (inBounds(x, y)) {
+            roadData[index(x, y)] = true;
+            permanentRoadData[index(x, y)] = true;
+            zoneData[index(x, y)] = ZoneType.ROAD;
+        }
+    }
+
+    /** Remove a road tile (demolish). Silently ignored on permanent roads. */
     public void removeRoad(int x, int y) {
-        if (inBounds(x, y) && roadData[index(x, y)]) {
+        if (inBounds(x, y) && roadData[index(x, y)] && !permanentRoadData[index(x, y)]) {
             roadData[index(x, y)] = false;
-            // Revert zone to what it was before road — repaint via MapGenerator
-            zoneData[index(x, y)] = ZoneType.CITY; // safe default (desert cities blend anyway)
+            zoneData[index(x, y)] = ZoneType.CITY;
         }
     }
 

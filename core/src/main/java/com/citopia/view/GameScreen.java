@@ -747,7 +747,13 @@ public class GameScreen extends ScreenAdapter {
                                 canAfford ? 0.9f : 0.2f,
                                 0.2f, 0.65f);
         } else { // DEMOLISH
-            game.batch.setColor(0.95f, 0.25f, 0.25f, 0.65f);
+            // Permanent roads: orange "locked" colour; regular roads: red
+            boolean isPermanent = tileMap.isPermanentRoad(hoverTileX, hoverTileY);
+            if (isPermanent) {
+                game.batch.setColor(1.0f, 0.55f, 0.0f, 0.75f); // orange = locked
+            } else {
+                game.batch.setColor(0.95f, 0.25f, 0.25f, 0.65f); // red = demolishable
+            }
         }
 
         // Draw border around tile using hudPixel
