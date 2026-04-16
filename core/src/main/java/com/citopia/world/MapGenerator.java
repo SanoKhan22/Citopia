@@ -37,94 +37,102 @@ public final class MapGenerator {
         buildPresetRoadNetwork(map);
     }
 
-    // ── Preset road network ───────────────────────────────────────────────────
-
     /**
-     * Draws permanent 3-tile-wide roads connecting the capital to each outer city.
-     * Capital → North : straight vertical corridor
-     * Capital → South : straight vertical corridor
-     * Capital → East  : straight horizontal corridor
-     * Capital → West  : straight horizontal corridor
+     * Builds the permanent road network in two layers:
      *
-     * Roads start/end at the CORE_HALF_SIZE boundary of each city so they
-     * don't overwrite the city core zone tiles.
+     *  1. OUTER RING – 4 L-shaped segments that link adjacent outer cities
+     *     through the map quadrants, completely bypassing the capital.
+     *     Layout (schematic):
+     *
+     *          N
+     *         /|\
+     *        / | \
+     *       NW |  NE   <- L-shape through the NW quadrant and NE quadrant
+     *      /   |   \
+     *     W----+----E   (+ is NOT a road; the capital sits here)
+     *      \   |   /
+     *       SW |  SE
+     *        \ | /
+     *          S
+     *
+     *     Concretely:
+     *       N↔E : horizontal along N.cy from N.e_edge to corner,
+     *             then vertical  along E.cx from corner to E.n_edge
+     *       E↔S : vertical  along E.cx from E.s_edge to corner,
+     *             then horizontal along S.cy from corner to S.e_edge
+     *       S↔W : horizontal along S.cy from S.w_edge to corner,
+     *             then vertical  along W.cx from corner to W.s_edge
+     *       W↔N : vertical  along W.cx from W.n_edge to corner,
+     *             then horizontal along N.cy from corner to N.w_edge
+     *
+     *  2. CAPITAL SPURS – 4 single-tile-wide roads that shoot out from
+     *     each edge of the capital and terminate at the nearest outer city,
+     *     giving the capital 4 separate access points to the network without
+     *     roads crossing inside it.
+     *
+     * All tiles placed via placeRoadPermanent() and are non-demolishable.
      */
     private static void buildPresetRoadNetwork(TileMap map) {
-        CitySite capital = map.capital();
-        if (capital == null) return;
+        CitySite cap = findCity(map, CitySite.CityType.CAPITAL);
+        CitySite N   = findCity(map, CitySite.CityType.NORTH);
+        CitySite S   = findCity(map, CitySite.CityType.SOUTH);
+        CitySite E   = findCity(map, CitySite.CityType.EAST);
+        CitySite W   = findCity(map, CitySite.CityType.WEST);
+        if (cap == null || N == null || S == null || E == null || W == null) return;
 
-        int capX = capital.centerX;
-        int capY = capital.centerY;
-        int half = CitySite.CORE_HALF_SIZE; // road starts/ends at city core edge
+        int half = CitySite.CORE_HALF_SIZE;
 
-        for (CitySite city : map.cities()) {
-            if (city.type == CitySite.CityType.CAPITAL) continue;
+        // ── Capital spurs (1 tile wide, no roads inside city core) ────────────
+        // North spur: cap.N_edge → N city centre (entry point)
+        vRoad(map, cap.centerX, cap.centerY + half + 1, N.centerY);
+        // South spur: S city centre → cap.S_edge
+        vRoad(map, cap.centerX, S.centerY, cap.centerY - half - 1);
+        // East spur:  cap.E_edge → E city centre
+        hRoad(map, cap.centerX + half + 1, E.centerX, cap.centerY);
+        // West spur:  W city centre → cap.W_edge
+        hRoad(map, W.centerX, cap.centerX - half - 1, cap.centerY);
 
-            int cx = city.centerX;
-            int cy = city.centerY;
+        // ── Outer ring: 4 L-shaped segments ──────────────────────────────────
+        // NE: horizontal from N.e_edge to (E.cx, N.cy) corner,
+        //     then vertical  down to E.n_edge
+        hRoad(map, N.centerX + half + 1, E.centerX, N.centerY);
+        vRoad(map, E.centerX, E.centerY + half + 1, N.centerY);   // corner point included
 
-            switch (city.type) {
-                case NORTH:
-                    // Vertical corridor: capital top edge → south edge of North City
-                    drawRoadCorridor(map, capX, capY + half + 1, capX, cy - half - 1,
-                                     true /*vertical*/, 3 /*width*/);
-                    break;
-                case SOUTH:
-                    // Vertical corridor: capital bottom edge → north edge of South City
-                    drawRoadCorridor(map, capX, capY - half - 1, capX, cy + half + 1,
-                                     true, 3);
-                    break;
-                case EAST:
-                    // Horizontal corridor: capital right edge → west edge of East City
-                    drawRoadCorridor(map, capX + half + 1, capY, cx - half - 1, capY,
-                                     false /*horizontal*/, 3);
-                    break;
-                case WEST:
-                    // Horizontal corridor: capital left edge → east edge of West City
-                    drawRoadCorridor(map, capX - half - 1, capY, cx + half + 1, capY,
-                                     false, 3);
-                    break;
-                default:
-                    break;
-            }
-        }
+        // SE: vertical from E.s_edge to (E.cx, S.cy) corner,
+        //     then horizontal west to S.e_edge
+        vRoad(map, E.centerX, S.centerY, E.centerY - half - 1);
+        hRoad(map, S.centerX + half + 1, E.centerX, S.centerY);   // corner point included
+
+        // SW: horizontal from S.w_edge to (W.cx, S.cy) corner,
+        //     then vertical  up to W.s_edge
+        hRoad(map, W.centerX, S.centerX - half - 1, S.centerY);
+        vRoad(map, W.centerX, S.centerY, W.centerY - half - 1);   // corner point included
+
+        // NW: vertical from W.n_edge to (W.cx, N.cy) corner,
+        //     then horizontal east to N.w_edge
+        vRoad(map, W.centerX, W.centerY + half + 1, N.centerY);
+        hRoad(map, W.centerX, N.centerX - half - 1, N.centerY);   // corner point included
     }
 
-    /**
-     * Paints an axis-aligned corridor of permanent road tiles.
-     *
-     * @param vertical  true = north/south corridor, false = east/west corridor
-     * @param roadWidth number of parallel tiles wide (centred on the axis)
-     */
-    private static void drawRoadCorridor(TileMap map,
-                                          int x1, int y1, int x2, int y2,
-                                          boolean vertical, int roadWidth) {
-        // Normalise direction
-        int fromX = Math.min(x1, x2);
-        int toX   = Math.max(x1, x2);
-        int fromY = Math.min(y1, y2);
-        int toY   = Math.max(y1, y2);
-
-        int spread = roadWidth / 2; // half-width offset (1 for width=3)
-
-        if (vertical) {
-            // Fixed X column (with spread), iterate Y
-            int axisX = x1; // the centre column
-            for (int y = fromY; y <= toY; y++) {
-                for (int dx = -spread; dx <= spread; dx++) {
-                    map.placeRoadPermanent(axisX + dx, y);
-                }
-            }
-        } else {
-            // Fixed Y row (with spread), iterate X
-            int axisY = y1; // the centre row
-            for (int x = fromX; x <= toX; x++) {
-                for (int dy = -spread; dy <= spread; dy++) {
-                    map.placeRoadPermanent(x, axisY + dy);
-                }
-            }
-        }
+    /** Draw a horizontal 1-tile-wide permanent road from x1 to x2 at fixed y. */
+    private static void hRoad(TileMap map, int x1, int x2, int y) {
+        int lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+        for (int x = lo; x <= hi; x++) map.placeRoadPermanent(x, y);
     }
+
+    /** Draw a vertical 1-tile-wide permanent road from y1 to y2 at fixed x. */
+    private static void vRoad(TileMap map, int x, int y1, int y2) {
+        int lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+        for (int y = lo; y <= hi; y++) map.placeRoadPermanent(x, y);
+    }
+
+    /** Find a city by type; returns null if not registered. */
+    private static CitySite findCity(TileMap map, CitySite.CityType type) {
+        return map.cities().stream()
+                .filter(c -> c.type == type)
+                .findFirst().orElse(null);
+    }
+
 
     // ── City registration ─────────────────────────────────────────────────────
 
