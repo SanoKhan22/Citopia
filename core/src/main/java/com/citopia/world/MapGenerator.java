@@ -93,25 +93,25 @@ public final class MapGenerator {
         hRoad(map, W.centerX, cap.centerX - half - 1, cap.centerY);
 
         // ── Outer ring: 4 L-shaped segments ──────────────────────────────────
-        // NE: horizontal from N.e_edge to (E.cx, N.cy) corner,
-        //     then vertical  down to E.n_edge
-        hRoad(map, N.centerX + half + 1, E.centerX, N.centerY);
-        vRoad(map, E.centerX, E.centerY + half + 1, N.centerY);   // corner point included
+        // NE: horizontal from N.cx to (E.cx, N.cy) corner,
+        //     then vertical down to E.cy
+        hRoad(map, N.centerX, E.centerX, N.centerY);
+        vRoad(map, E.centerX, E.centerY, N.centerY);
 
-        // SE: vertical from E.s_edge to (E.cx, S.cy) corner,
-        //     then horizontal west to S.e_edge
-        vRoad(map, E.centerX, S.centerY, E.centerY - half - 1);
-        hRoad(map, S.centerX + half + 1, E.centerX, S.centerY);   // corner point included
+        // SE: vertical from E.cy to (E.cx, S.cy) corner,
+        //     then horizontal west to S.cx
+        vRoad(map, E.centerX, S.centerY, E.centerY);
+        hRoad(map, S.centerX, E.centerX, S.centerY);
 
-        // SW: horizontal from S.w_edge to (W.cx, S.cy) corner,
-        //     then vertical  up to W.s_edge
-        hRoad(map, W.centerX, S.centerX - half - 1, S.centerY);
-        vRoad(map, W.centerX, S.centerY, W.centerY - half - 1);   // corner point included
+        // SW: horizontal from S.cx to (W.cx, S.cy) corner,
+        //     then vertical up to W.cy
+        hRoad(map, W.centerX, S.centerX, S.centerY);
+        vRoad(map, W.centerX, S.centerY, W.centerY);
 
-        // NW: vertical from W.n_edge to (W.cx, N.cy) corner,
-        //     then horizontal east to N.w_edge
-        vRoad(map, W.centerX, W.centerY + half + 1, N.centerY);
-        hRoad(map, W.centerX, N.centerX - half - 1, N.centerY);   // corner point included
+        // NW: vertical from W.cy to (W.cx, N.cy) corner,
+        //     then horizontal east to N.cx
+        vRoad(map, W.centerX, W.centerY, N.centerY);
+        hRoad(map, W.centerX, N.centerX, N.centerY);
     }
 
     /** Draw a horizontal 1-tile-wide permanent road from x1 to x2 at fixed y. */
