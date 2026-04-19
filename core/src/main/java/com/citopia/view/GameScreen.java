@@ -397,16 +397,19 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void applyMinimapColor(int x, int y) {
-        ZoneType zone = tileMap.zone(x, y);
-        switch (zone) {
-            case OASIS_LAKE        -> minimapPixmap.setColor(0.16f, 0.47f, 0.70f, 1f);
-            case OASIS_STONE       -> minimapPixmap.setColor(0.56f, 0.53f, 0.47f, 1f);
-            case OASIS_TREE        -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
-            case OASIS_GREENERY    -> minimapPixmap.setColor(0.25f, 0.56f, 0.29f, 1f);
-            case LAKE_COAST_DECOR  -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
-            case CITY              -> minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
-            case ROAD              -> minimapPixmap.setColor(0.45f, 0.35f, 0.20f, 1f);
-            default                -> minimapPixmap.setColor(0.84f, 0.64f, 0.39f, 1f);
+        if (tileMap.hasRoad(x, y)) {
+            minimapPixmap.setColor(0.45f, 0.35f, 0.20f, 1f);
+        } else {
+            ZoneType zone = tileMap.zone(x, y);
+            switch (zone) {
+                case OASIS_LAKE        -> minimapPixmap.setColor(0.16f, 0.47f, 0.70f, 1f);
+                case OASIS_STONE       -> minimapPixmap.setColor(0.56f, 0.53f, 0.47f, 1f);
+                case OASIS_TREE        -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
+                case OASIS_GREENERY    -> minimapPixmap.setColor(0.25f, 0.56f, 0.29f, 1f);
+                case LAKE_COAST_DECOR  -> minimapPixmap.setColor(0.22f, 0.46f, 0.23f, 1f);
+                case CITY              -> minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
+                default                -> minimapPixmap.setColor(0.84f, 0.64f, 0.39f, 1f);
+            }
         }
         minimapPixmap.drawPixel(x, tileMap.height() - 1 - y);
     }
