@@ -3,7 +3,7 @@ package com.citopia;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.citopia.assets.AssetRegistry;
-import com.citopia.screen.GameScreen;
+import com.citopia.view.GameScreen;
 
 /**
  * Main entry point for the Citopia transport tycoon game.
@@ -18,8 +18,7 @@ public class CitopiaGame extends Game {
     public void create() {
         batch = new SpriteBatch();
         assets = new AssetRegistry();
-        // Since we are moving to screen.GameScreen, pass whatever it needs or adapt
-        setScreen(new GameScreen());
+        setScreen(new GameScreen(this));
     }
 
     @Override
