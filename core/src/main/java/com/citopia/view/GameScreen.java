@@ -399,6 +399,8 @@ public class GameScreen extends ScreenAdapter {
     private void applyMinimapColor(int x, int y) {
         if (tileMap.hasRoad(x, y)) {
             minimapPixmap.setColor(0.45f, 0.35f, 0.20f, 1f);
+            // Draw roads a bit thicker (3x3) so they don't disappear when the minimap is scaled down
+            minimapPixmap.fillRectangle(x - 1, tileMap.height() - 1 - y - 1, 3, 3);
         } else {
             ZoneType zone = tileMap.zone(x, y);
             switch (zone) {
@@ -410,8 +412,8 @@ public class GameScreen extends ScreenAdapter {
                 case CITY              -> minimapPixmap.setColor(0.68f, 0.57f, 0.34f, 1f);
                 default                -> minimapPixmap.setColor(0.84f, 0.64f, 0.39f, 1f);
             }
+            minimapPixmap.drawPixel(x, tileMap.height() - 1 - y);
         }
-        minimapPixmap.drawPixel(x, tileMap.height() - 1 - y);
     }
 
     public void refreshMinimapTile(int x, int y) {
