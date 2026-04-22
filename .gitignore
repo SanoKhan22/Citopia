@@ -56,3 +56,6 @@ logs/
 *.log
 wiki.md
 .gradle-user-home/
+
+build_old/
+.local-build/

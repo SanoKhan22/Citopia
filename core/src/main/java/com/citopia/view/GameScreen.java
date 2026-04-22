@@ -17,6 +17,7 @@ import com.citopia.CitopiaGame;
 import com.citopia.assets.AssetId;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
+import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
 
@@ -54,6 +55,24 @@ public class GameScreen extends ScreenAdapter {
     private final TextureRegion decor5Region;
     private final TextureRegion tree8Region;
     private final TextureRegion treeLargeRegion;
+    private final TextureRegion houseRegion;
+    private final TextureRegion castleSquareRegion;
+    private final TextureRegion castleRoundRegion;
+    private final TextureRegion blueBannerRegion;
+    private final TextureRegion rock01Region;
+    private final TextureRegion rock02Region;
+    private final TextureRegion rock03Region;
+    private final TextureRegion rock04Region;
+    private final TextureRegion rock05Region;
+    private final TextureRegion campfireRegion;
+    private final TextureRegion tentStandardRegion;
+    private final TextureRegion tentDesertRegion;
+    private final TextureRegion deadTree1Region;
+    private final TextureRegion deadTree2Region;
+    private final TextureRegion decor8Region;
+    private final TextureRegion woodenCartRegion;
+    private final TextureRegion magicTowerRegion;
+    private final TextureRegion windmillRegion;
     private final BitmapFont hudFont;
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
@@ -96,6 +115,24 @@ public class GameScreen extends ScreenAdapter {
         this.decor5Region = safeRegion(AssetId.PROP_DECOR_5, greenery10Region);
         this.tree8Region = safeRegion(AssetId.PROP_TREE_8, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
         this.treeLargeRegion = safeRegion(AssetId.PROP_TREE_LARGE, safeRegion(AssetId.PROP_TREE_MEDIUM, greenery10Region));
+        this.houseRegion = safeRegion(AssetId.PROP_HOUSE_SUMMER, greenery10Region);
+        this.castleSquareRegion = safeRegion(AssetId.PROP_CASTLE_SQUARE, greenery10Region);
+        this.castleRoundRegion = safeRegion(AssetId.PROP_CASTLE_ROUND, greenery10Region);
+        this.blueBannerRegion = safeRegion(AssetId.PROP_BLUE_BANNER, greenery10Region);
+        this.rock01Region = safeRegion(AssetId.PROP_ROCK_01_SUMMER, stones1Region);
+        this.rock02Region = safeRegion(AssetId.PROP_ROCK_02_SUMMER, rock01Region);
+        this.rock03Region = safeRegion(AssetId.PROP_ROCK_03_SUMMER, rock01Region);
+        this.rock04Region = safeRegion(AssetId.PROP_ROCK_04_SUMMER, rock01Region);
+        this.rock05Region = safeRegion(AssetId.PROP_ROCK_05_SUMMER, rock01Region);
+        this.campfireRegion = safeRegion(AssetId.PROP_CAMPFIRE_SUMMER, wellRegion);
+        this.tentStandardRegion = safeRegion(AssetId.PROP_CAMP_TENT_1, wellRegion);
+        this.tentDesertRegion = safeRegion(AssetId.PROP_CAMP_TENT_2, wellRegion);
+        this.deadTree1Region = safeRegion(AssetId.PROP_DEAD_TREE_1, rock01Region);
+        this.deadTree2Region = safeRegion(AssetId.PROP_DEAD_TREE_2, rock01Region);
+        this.decor8Region = safeRegion(AssetId.PROP_DECOR_8, rock01Region);
+        this.woodenCartRegion = safeRegion(AssetId.VEHICLE_WOODEN_CART, rock01Region);
+        this.magicTowerRegion = safeRegion(AssetId.PROP_MAGIC_TOWER, rock01Region);
+        this.windmillRegion = safeRegion(AssetId.PROP_WINDMILL, houseRegion);
 
         this.minimapPixmap = new Pixmap(tileMap.width(), tileMap.height(), Pixmap.Format.RGBA8888);
         buildMinimapPixmap();
@@ -503,6 +540,156 @@ public class GameScreen extends ScreenAdapter {
         drawCityBuilding(building5Region, midX + 12.8f, outerHomeRowY - 0.2f, 1.8f, 2.1f);
     }
 
+    private void drawSouthVillage() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        // Magic Stone Tower, very unique, 8 tiles out from oasis
+        float magicTowerY = midY - OASIS_HALF_HEIGHT - 8.0f;
+        drawCityBuilding(magicTowerRegion, midX - 3.5f, magicTowerY, 3.5f, 4.5f);
+
+        // South Village grows towards the oasis
+        // Houses start 12 tiles away from oasis edge
+        float housesBaseY = midY - OASIS_HALF_HEIGHT - 12f;
+        // Towers and flag are 18-20 tiles away from oasis edge (further out)
+        float towersBaseY = midY - OASIS_HALF_HEIGHT - 19f;
+
+        // Use a consistent random seed for village layout
+        Random villageRandom = new Random(42L);
+
+        // Draw rocks first so they appear behind buildings and don't overlap them incorrectly
+        Random rockRandom = new Random(123L);
+        drawSouthVillageRocks(rockRandom, midX, housesBaseY, towersBaseY);
+
+        // Castle Round on the left (outer perimeter)
+        drawCityBuilding(castleRoundRegion, midX - 10.0f, towersBaseY, 4.0f, 4.0f);
+
+        // Blue Banner Flag in the center (outer perimeter, tallest point)
+        drawCityBuilding(blueBannerRegion, midX - 1.0f, towersBaseY + 1.0f, 2.5f, 2.5f);
+
+        // Castle Square on the right (outer perimeter)
+        drawCityBuilding(castleSquareRegion, midX + 8.0f, towersBaseY, 4.0f, 4.0f);
+
+        // Five houses spread across South-East to South-West, closer to oasis
+        // We limit X randomness to a strict range (+/- 0.6f) so they do not overlap each other
+        
+        // Add 2 Wells (Placed between/behind houses). Draw them FIRST so they stay behind.
+        drawCityBuilding(wellRegion, midX - 10.5f, housesBaseY + 2.5f, 1.8f, 1.8f);
+        drawCityBuilding(wellRegion, midX + 10.5f, housesBaseY + 2.2f, 1.8f, 1.8f);
+
+        // House 5 (Far West, Highest Y first so it stays behind if overlapping)
+        float house5X = midX - 13.5f + (villageRandom.nextFloat() * 1.2f - 0.6f);
+        float house5Y = housesBaseY + 1.2f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+        drawCityBuilding(houseRegion, house5X, house5Y, 2.8f, 2.8f);
+
+        // House 1 (Far East)
+        float house1X = midX + 13.0f + (villageRandom.nextFloat() * 1.2f - 0.6f);
+        float house1Y = housesBaseY + 1.0f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+        drawCityBuilding(houseRegion, house1X, house1Y, 2.8f, 2.8f);
+        
+        // House 4 (Mid-West)
+        float house4X = midX - 10.0f + (villageRandom.nextFloat() * 1.2f - 0.6f);
+        float house4Y = housesBaseY + 0.8f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+        drawCityBuilding(houseRegion, house4X, house4Y, 2.8f, 2.8f);
+
+        // House 2 (East)
+        float house2X = midX + 8.5f + (villageRandom.nextFloat() * 1.2f - 0.6f);
+        float house2Y = housesBaseY + 0.5f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+        drawCityBuilding(houseRegion, house2X, house2Y, 2.8f, 2.8f);
+        
+        // House 3 (West-Center)
+        float house3X = midX - 6.5f + (villageRandom.nextFloat() * 1.2f - 0.6f);
+        float house3Y = housesBaseY + (villageRandom.nextFloat() * 1.0f - 0.5f);
+        drawCityBuilding(houseRegion, house3X, house3Y, 2.8f, 2.8f);
+
+        // Add 2 Campfires (Placed in front of the houses, drawn LAST to stay on top)
+        drawCityBuilding(campfireRegion, midX - 10.5f, housesBaseY - 2.0f, 1.5f, 1.5f);
+        drawCityBuilding(campfireRegion, midX + 10.5f, housesBaseY - 1.5f, 1.5f, 1.5f);
+
+        // Add Eastern and Western Camps (Nomad camps, fully apart from South Village)
+        drawNomadCamps(villageRandom, midX, midY);
+    }
+
+    private void drawNomadCamps(Random villageRandom, int midX, int midY) {
+        // True West Camp (Desert Tents, dead trees, decor8, cart)
+        // Set at Y = midY entirely, and X = midX - 25 so it is cleanly in the West
+        float westCampX = midX - 25.0f;
+        float westCampY = midY;
+
+        drawCityBuilding(deadTree1Region, westCampX - 2.0f, westCampY + 3.0f, 2.5f, 3.5f);
+        drawCityBuilding(decor8Region, westCampX + 3.0f, westCampY + 2.0f, 1.2f, 1.2f);
+        
+        // 3 Tents (Desert style) scattered around the campfire, with at least 1 tile spacing
+        for (int i = 0; i < 3; i++) {
+            float tentX = westCampX - 4.0f + (i * 3.5f) + (villageRandom.nextFloat() * 0.6f - 0.3f);
+            float tentY = westCampY - 1.0f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+            drawCityBuilding(tentDesertRegion, tentX, tentY, 2.4f, 2.4f);
+        }
+        
+        drawCityBuilding(woodenCartRegion, westCampX + 1.5f, westCampY - 3.0f, 1.5f, 1.5f);
+        drawCityBuilding(campfireRegion, westCampX, westCampY - 1.5f, 1.3f, 1.3f);
+        drawCityBuilding(deadTree2Region, westCampX - 4.0f, westCampY - 4.0f, 2.0f, 3.0f);
+
+        // True East Camp (Standard Tents, dead trees, decor8, cart)
+        // Set at Y = midY entirely, and X = midX + 25 so it is cleanly in the East
+        float eastCampX = midX + 25.0f;
+        float eastCampY = midY;
+
+        drawCityBuilding(deadTree2Region, eastCampX + 1.0f, eastCampY + 3.5f, 2.5f, 3.5f);
+        drawCityBuilding(decor8Region, eastCampX - 3.5f, eastCampY + 2.5f, 1.2f, 1.2f);
+        
+        // 4 Tents (Standard style), with at least 1 tile spacing
+        for (int i = 0; i < 4; i++) {
+            float tentX = eastCampX - 5.5f + (i * 3.5f) + (villageRandom.nextFloat() * 0.6f - 0.3f);
+            float tentY = eastCampY - 0.5f + (villageRandom.nextFloat() * 1.0f - 0.5f);
+            drawCityBuilding(tentStandardRegion, tentX, tentY, 2.4f, 2.4f);
+        }
+        
+        drawCityBuilding(woodenCartRegion, eastCampX + 3.5f, eastCampY - 2.5f, 1.5f, 1.5f);
+        drawCityBuilding(campfireRegion, eastCampX, eastCampY - 2.0f, 1.3f, 1.3f);
+        drawCityBuilding(deadTree1Region, eastCampX - 3.5f, eastCampY - 3.5f, 2.0f, 3.0f);
+    }
+
+    private void drawWindmills() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        // North-West Windmill
+        float nwX = midX - 20.0f;
+        float nwY = midY + 18.0f;
+        drawCityBuilding(windmillRegion, nwX, nwY, 3.5f, 4.5f);
+
+        // South-East Windmill
+        float seX = midX + 22.0f;
+        float seY = midY - 22.0f;
+        drawCityBuilding(windmillRegion, seX, seY, 3.5f, 4.5f);
+    }
+
+    private void drawSouthVillageRocks(Random villageRandom, int midX, float housesBaseY, float towersBaseY) {
+        // Place rocks away from the center banner (-1.0f) and the main houses
+        float[] clusterX = {midX - 15.0f, midX - 5.0f, midX + 3.0f, midX + 13.0f};
+        float centerBandY = (housesBaseY + towersBaseY) * 0.5f;
+
+        for (float baseX : clusterX) {
+            for (int i = 0; i < 3; i++) {
+                float rockX = baseX + (villageRandom.nextFloat() * 4.0f - 2.0f);
+                float rockY = centerBandY + (villageRandom.nextFloat() * 6.0f - 3.0f);
+                float rockSize = 1.4f + (villageRandom.nextFloat() * 1.1f);
+                drawCityBuilding(randomRockRegion(villageRandom), rockX, rockY, rockSize, rockSize);
+            }
+        }
+    }
+
+    private TextureRegion randomRockRegion(Random villageRandom) {
+        return switch (villageRandom.nextInt(5)) {
+            case 0 -> rock01Region;
+            case 1 -> rock02Region;
+            case 2 -> rock03Region;
+            case 3 -> rock04Region;
+            default -> rock05Region;
+        };
+    }
+
     private void drawVillageConnectorDecor() {
         int midX = tileMap.width() / 2;
         int midY = tileMap.height() / 2;
@@ -644,10 +831,42 @@ public class GameScreen extends ScreenAdapter {
 
         // Layer 8: North-side city layout
         drawNorthCity();
+
+        // Layer 8b: South-side city layout
+        drawSouthVillage();
+
+        // Layer 8c: Far-out distinct landmarks
+        drawWindmills();
+
+        // Layer 9: Directional Labels for City Planning
+        drawDirectionalPlanners();
         game.batch.end();
 
         // Draw HUD for direction
         drawHUD();
+    }
+
+    private void drawDirectionalPlanners() {
+        int midX = tileMap.width() / 2;
+        int midY = tileMap.height() / 2;
+
+        float offset = 28f * MapConfig.TILE_DRAW_SIZE; // 28 tiles out from center
+        float centerX = midX * MapConfig.TILE_DRAW_SIZE;
+        float centerY = midY * MapConfig.TILE_DRAW_SIZE;
+
+        hudFont.getData().setScale(3.5f); // Scale up text so it's readable when zoomed out
+
+        hudFont.draw(game.batch, "NORTH", centerX, centerY + offset);
+        hudFont.draw(game.batch, "SOUTH", centerX, centerY - offset);
+        hudFont.draw(game.batch, "EAST", centerX + offset, centerY);
+        hudFont.draw(game.batch, "WEST", centerX - offset, centerY);
+
+        hudFont.draw(game.batch, "NORTH-EAST", centerX + offset * 0.7f, centerY + offset * 0.7f);
+        hudFont.draw(game.batch, "NORTH-WEST", centerX - offset * 0.7f, centerY + offset * 0.7f);
+        hudFont.draw(game.batch, "SOUTH-EAST", centerX + offset * 0.7f, centerY - offset * 0.7f);
+        hudFont.draw(game.batch, "SOUTH-WEST", centerX - offset * 0.7f, centerY - offset * 0.7f);
+
+        hudFont.getData().setScale(1.1f); // Reset to HUD scale
     }
 
     private void drawHUD() {
