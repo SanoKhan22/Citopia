@@ -107,6 +107,9 @@ public class GameScreen extends ScreenAdapter {
     private static final float MONTH_DURATION_SECONDS = 30f;
     private float monthTimer = 0f;
 
+    // Animation timer (accumulated real-time for visual effects)
+    private float animTime = 0f;
+
     public GameScreen(CitopiaGame game) {
         this.game = game;
         this.camera = new OrthographicCamera();
@@ -772,6 +775,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         handleInput(delta);
+        animTime += delta;
 
         // Advance in-game calendar
         monthTimer += delta;
@@ -924,37 +928,107 @@ public class GameScreen extends ScreenAdapter {
     }
 
     /**
-     * Draws city names centered above each city in world-space.
-     * Uses a dark drop-shadow for readability over any terrain.
+     * Draws animated, visually rich city name labels centered above each city.
+     * Features: floating bob, pulsing scale, gold shimmer for capital,
+     * dark banner plate behind text, and decorative accent lines.
      */
     private void drawCityLabels() {
-        hudFont.getData().setScale(5.0f);
-        float labelOffsetY = (CitySite.CORE_HALF_SIZE + 4) * MapConfig.TILE_DRAW_SIZE;
-        float shadowOffset = 3f;
+        float labelOffsetY = (CitySite.CORE_HALF_SIZE + 5) * MapConfig.TILE_DRAW_SIZE;
 
-        for (CitySite city : tileMap.cities()) {
+        for (int i = 0; i < tileMap.cities().size(); i++) {
+            CitySite city = tileMap.cities().get(i);
+            boolean isCapital = city.type == CitySite.CityType.CAPITAL;
+
+            // ── Per-city phase offset so labels don't all bob in sync ──
+            float phase = animTime + i * 1.3f;
+
+            // ── Floating bob: gentle sine wave vertical movement ──
+            float bobAmplitude = MapConfig.TILE_DRAW_SIZE * 0.6f;
+            float bobY = (float) Math.sin(phase * 1.2f) * bobAmplitude;
+
+            // ── Pulsing scale: subtle breathing effect ──
+            float baseScale = isCapital ? 6.0f : 4.5f;
+            float pulseScale = baseScale + 0.3f * (float) Math.sin(phase * 1.8f);
+            hudFont.getData().setScale(pulseScale);
+
             String name = city.name.toUpperCase();
             com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
                     new com.badlogic.gdx.graphics.g2d.GlyphLayout(hudFont, name);
+
             float worldX = city.centerX * MapConfig.TILE_DRAW_SIZE + MapConfig.TILE_DRAW_SIZE * 0.5f;
-            float worldY = city.centerY * MapConfig.TILE_DRAW_SIZE + labelOffsetY;
+            float worldY = city.centerY * MapConfig.TILE_DRAW_SIZE + labelOffsetY + bobY;
             float textX = worldX - layout.width / 2f;
             float textY = worldY + layout.height / 2f;
 
-            // Drop shadow (dark)
-            hudFont.setColor(0f, 0f, 0f, 0.7f);
-            hudFont.draw(game.batch, name, textX + shadowOffset, textY - shadowOffset);
+            // ── Dark banner plate behind text ──
+            float padX = layout.width * 0.18f;
+            float padY = layout.height * 0.55f;
+            float bannerX = textX - padX;
+            float bannerY = textY - layout.height - padY;
+            float bannerW = layout.width + padX * 2f;
+            float bannerH = layout.height + padY * 2f;
 
-            // Main label (warm gold for capital, white for others)
-            if (city.type == CitySite.CityType.CAPITAL) {
-                hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+            game.batch.setColor(0.05f, 0.03f, 0.01f, 0.65f);
+            game.batch.draw(hudPixel, bannerX, bannerY, bannerW, bannerH);
+
+            // ── Decorative accent lines on sides of banner ──
+            float lineThickness = 2.5f;
+            float lineInset = padX * 0.3f;
+            if (isCapital) {
+                // Gold accent borders for capital
+                float shimmer = 0.8f + 0.2f * (float) Math.sin(phase * 3.0f);
+                game.batch.setColor(shimmer, 0.75f * shimmer, 0.15f, 0.9f);
             } else {
-                hudFont.setColor(1f, 1f, 1f, 1f);
+                game.batch.setColor(0.85f, 0.78f, 0.62f, 0.6f);
+            }
+            // Top line
+            game.batch.draw(hudPixel, bannerX + lineInset, bannerY + bannerH - lineThickness,
+                    bannerW - lineInset * 2f, lineThickness);
+            // Bottom line
+            game.batch.draw(hudPixel, bannerX + lineInset, bannerY,
+                    bannerW - lineInset * 2f, lineThickness);
+            // Left line
+            game.batch.draw(hudPixel, bannerX, bannerY + lineInset,
+                    lineThickness, bannerH - lineInset * 2f);
+            // Right line
+            game.batch.draw(hudPixel, bannerX + bannerW - lineThickness, bannerY + lineInset,
+                    lineThickness, bannerH - lineInset * 2f);
+
+            // ── Outer glow pass (slightly offset in 4 directions) ──
+            float glowDist = 2.5f;
+            if (isCapital) {
+                float glow = 0.4f + 0.15f * (float) Math.sin(phase * 2.5f);
+                hudFont.setColor(1f, 0.7f, 0.1f, glow);
+            } else {
+                hudFont.setColor(0.9f, 0.85f, 0.7f, 0.25f);
+            }
+            hudFont.draw(game.batch, name, textX + glowDist, textY);
+            hudFont.draw(game.batch, name, textX - glowDist, textY);
+            hudFont.draw(game.batch, name, textX, textY + glowDist);
+            hudFont.draw(game.batch, name, textX, textY - glowDist);
+
+            // ── Drop shadow ──
+            hudFont.setColor(0f, 0f, 0f, 0.75f);
+            hudFont.draw(game.batch, name, textX + 4f, textY - 4f);
+
+            // ── Main text with shimmer color ──
+            if (isCapital) {
+                // Gold shimmer cycling through warm tones
+                float t = (float) Math.sin(phase * 2.0f) * 0.5f + 0.5f;
+                float r = 1.0f;
+                float g = 0.78f + 0.12f * t;
+                float b = 0.15f + 0.15f * t;
+                hudFont.setColor(r, g, b, 1f);
+            } else {
+                // Subtle warm white with gentle pulse
+                float t = 0.9f + 0.1f * (float) Math.sin(phase * 1.5f);
+                hudFont.setColor(t, t * 0.97f, t * 0.90f, 1f);
             }
             hudFont.draw(game.batch, name, textX, textY);
         }
 
         // Reset font state
+        game.batch.setColor(1f, 1f, 1f, 1f);
         hudFont.setColor(1f, 1f, 1f, 1f);
         hudFont.getData().setScale(1.1f);
     }
