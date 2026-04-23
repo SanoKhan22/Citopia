@@ -890,6 +890,10 @@ public class GameScreen extends ScreenAdapter {
 
         // Layer 9: Directional Labels for City Planning
         drawDirectionalPlanners();
+
+        // Layer 10: City name labels
+        drawCityLabels();
+
         game.batch.end();
 
         // Draw HUD for direction
@@ -917,6 +921,42 @@ public class GameScreen extends ScreenAdapter {
         hudFont.draw(game.batch, "SOUTH-WEST", centerX - offset * 0.7f, centerY - offset * 0.7f);
 
         hudFont.getData().setScale(1.1f); // Reset to HUD scale
+    }
+
+    /**
+     * Draws city names centered above each city in world-space.
+     * Uses a dark drop-shadow for readability over any terrain.
+     */
+    private void drawCityLabels() {
+        hudFont.getData().setScale(5.0f);
+        float labelOffsetY = (CitySite.CORE_HALF_SIZE + 4) * MapConfig.TILE_DRAW_SIZE;
+        float shadowOffset = 3f;
+
+        for (CitySite city : tileMap.cities()) {
+            String name = city.name.toUpperCase();
+            com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
+                    new com.badlogic.gdx.graphics.g2d.GlyphLayout(hudFont, name);
+            float worldX = city.centerX * MapConfig.TILE_DRAW_SIZE + MapConfig.TILE_DRAW_SIZE * 0.5f;
+            float worldY = city.centerY * MapConfig.TILE_DRAW_SIZE + labelOffsetY;
+            float textX = worldX - layout.width / 2f;
+            float textY = worldY + layout.height / 2f;
+
+            // Drop shadow (dark)
+            hudFont.setColor(0f, 0f, 0f, 0.7f);
+            hudFont.draw(game.batch, name, textX + shadowOffset, textY - shadowOffset);
+
+            // Main label (warm gold for capital, white for others)
+            if (city.type == CitySite.CityType.CAPITAL) {
+                hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+            } else {
+                hudFont.setColor(1f, 1f, 1f, 1f);
+            }
+            hudFont.draw(game.batch, name, textX, textY);
+        }
+
+        // Reset font state
+        hudFont.setColor(1f, 1f, 1f, 1f);
+        hudFont.getData().setScale(1.1f);
     }
 
     private void drawHUD(float delta) {

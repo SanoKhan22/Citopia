@@ -142,17 +142,17 @@ public final class MapGenerator {
         int w = map.width();
         int h = map.height();
 
-        map.addCity(new CitySite(midX, midY, CitySite.CityType.CAPITAL, "Capital"));
+        map.addCity(new CitySite(midX, midY, CitySite.CityType.CAPITAL, "Dubai"));
 
         // Clamp outer cities inside map bounds
         map.addCity(new CitySite(
-                midX, Math.min(midY + d, h - cap - 1), CitySite.CityType.NORTH, "North City"));
+                midX, Math.min(midY + d, h - cap - 1), CitySite.CityType.NORTH, "Damascus"));
         map.addCity(new CitySite(
-                midX, Math.max(midY - d, cap + 1), CitySite.CityType.SOUTH, "South City"));
+                midX, Math.max(midY - d, cap + 1), CitySite.CityType.SOUTH, "Riyadh"));
         map.addCity(new CitySite(
-                Math.min(midX + d, w - cap - 1), midY, CitySite.CityType.EAST, "East City"));
+                Math.min(midX + d, w - cap - 1), midY, CitySite.CityType.EAST, "Baghdad"));
         map.addCity(new CitySite(
-                Math.max(midX - d, cap + 1), midY, CitySite.CityType.WEST, "West City"));
+                Math.max(midX - d, cap + 1), midY, CitySite.CityType.WEST, "Cairo"));
     }
 
     // ── City ground zone painting ─────────────────────────────────────────────
