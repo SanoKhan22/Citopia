@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.utils.Disposable;
 
 import java.util.HashMap;
@@ -15,9 +16,16 @@ public class AssetRegistry implements Disposable {
 
     private final TextureAtlas atlas;
     private final Map<String, Texture> standaloneTextures = new HashMap<>();
+    private final Map<String, Music> musicFiles = new HashMap<>();
 
     public AssetRegistry() {
         this.atlas = new TextureAtlas("atlas/game-assets.atlas");
+    }
+    
+    /** Load background music or long play audio. */
+    public Music music(String filePath) {
+        return musicFiles.computeIfAbsent(filePath,
+                path -> Gdx.audio.newMusic(Gdx.files.internal(path)));
     }
 
     /** Load a standalone PNG file (not in the atlas) by its internal path, e.g. "full_Road.png" */
@@ -54,5 +62,7 @@ public class AssetRegistry implements Disposable {
         atlas.dispose();
         standaloneTextures.values().forEach(Texture::dispose);
         standaloneTextures.clear();
+        musicFiles.values().forEach(Music::dispose);
+        musicFiles.clear();
     }
 }

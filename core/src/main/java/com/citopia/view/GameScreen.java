@@ -20,6 +20,7 @@ import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
 import com.citopia.world.ZoneType;
+import com.badlogic.gdx.audio.Music;
 import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
@@ -35,8 +36,8 @@ public class GameScreen extends ScreenAdapter {
     private static final float MINIMAP_MARKER_SIZE = 4f;
 
     // Toolbar layout constants
-    private static final float BTN_W    = 110f;
-    private static final float BTN_H    = 44f;
+    private static final float BTN_W    = 58f;
+    private static final float BTN_H    = 58f;
     private static final float BTN_GAP  = 6f;
     private static final float TOOLBAR_PADDING = 8f;
 
@@ -91,7 +92,20 @@ public class GameScreen extends ScreenAdapter {
     private final Pixmap minimapPixmap;
     private final Texture minimapTexture;
     private final Texture hudPixel;
+    private final TextureRegion uiGoldIcon;
+    private final com.badlogic.gdx.graphics.g2d.NinePatch uiPanel;
+    private final com.badlogic.gdx.graphics.g2d.NinePatch uiButton;
+    private final com.badlogic.gdx.graphics.g2d.NinePatch uiButtonActive;
+    private final TextureRegion uiIconPointer;
+    private final TextureRegion uiIconRoad;
+    private final TextureRegion uiIconDemolish;
+    
     private final BitmapFont goldFont;   // slightly larger font for gold counter
+    private float displayGold; // for rolling number animation
+    
+    private final Music bgm;
+    private boolean isMusicMuted = false;
+    
     private float pendingScrollY;
 
     // ── Build menu state ─────────────────────────────────────────
@@ -175,15 +189,40 @@ public class GameScreen extends ScreenAdapter {
         buildMinimapPixmap();
         this.minimapTexture = new Texture(minimapPixmap);
 
-        Pixmap pixelPixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
-        pixelPixmap.setColor(Color.WHITE);
-        pixelPixmap.fill();
-        this.hudPixel = new Texture(pixelPixmap);
-        pixelPixmap.dispose();
+        // Generic white pixel for solid colours
+        Pixmap pm = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pm.setColor(Color.WHITE);
+        pm.fill();
+        this.hudPixel = new Texture(pm);
+        pm.dispose();
+
+        // ── Load new UI assets ─────────────────────────────────────
+        this.uiGoldIcon = game.assets.region("UI/ui_gold_icon");
+        
+        // Panels and buttons are 1024x1024, so 100px margins should preserve borders
+        TextureRegion panelReg = game.assets.region("UI/ui_panel");
+        this.uiPanel = new com.badlogic.gdx.graphics.g2d.NinePatch(panelReg, 100, 100, 100, 100);
+        
+        TextureRegion btnReg = game.assets.region("UI/ui_button");
+        this.uiButton = new com.badlogic.gdx.graphics.g2d.NinePatch(btnReg, 80, 80, 80, 80);
+        
+        TextureRegion btnActReg = game.assets.region("UI/ui_button_active");
+        this.uiButtonActive = new com.badlogic.gdx.graphics.g2d.NinePatch(btnActReg, 80, 80, 80, 80);
+
+        this.uiIconPointer = game.assets.region("UI/ui_icon_pointer");
+        this.uiIconRoad = game.assets.region("UI/ui_icon_road");
+        this.uiIconDemolish = game.assets.region("UI/ui_icon_demolish");
 
         this.goldFont = new BitmapFont();
         this.goldFont.getData().setScale(1.4f);
         this.goldFont.setColor(1f, 0.87f, 0.27f, 1f); // warm gold colour
+        
+        this.displayGold = game.playerState.getGold();
+
+        this.bgm = game.assets.music("audio/desertBG.wav");
+        this.bgm.setLooping(true);
+        this.bgm.setVolume(1.0f);
+        this.bgm.play();
 
         camera.position.set(
                 (tileMap.width() * MapConfig.TILE_DRAW_SIZE) / 2f,
@@ -244,6 +283,14 @@ public class GameScreen extends ScreenAdapter {
                     case Input.Keys.R -> buildMode = BuildMode.ROAD;
                     case Input.Keys.X -> buildMode = BuildMode.DEMOLISH;
                     case Input.Keys.ESCAPE -> buildMode = BuildMode.POINTER;
+                    case Input.Keys.M -> {
+                        isMusicMuted = !isMusicMuted;
+                        if (isMusicMuted) {
+                            bgm.pause();
+                        } else {
+                            bgm.play();
+                        }
+                    }
                 }
                 return false;
             }
@@ -784,6 +831,21 @@ public class GameScreen extends ScreenAdapter {
             game.playerState.tick(tileMap.cities().size());
         }
 
+        // Rolling numbers logic for gold
+        float targetGold = game.playerState.getGold();
+        if (displayGold != targetGold) {
+            float diff = targetGold - displayGold;
+            // Roll by at least 15 per second, or larger if the difference is huge
+            float rate = Math.max(15f, Math.abs(diff) * 2.5f);
+            if (diff > 0) {
+                displayGold += rate * delta;
+                if (displayGold > targetGold) displayGold = targetGold;
+            } else {
+                displayGold -= rate * delta;
+                if (displayGold < targetGold) displayGold = targetGold;
+            }
+        }
+
         camera.update();
 
         ScreenUtils.clear(0.08f, 0.12f, 0.10f, 1f);
@@ -1043,13 +1105,11 @@ public class GameScreen extends ScreenAdapter {
         float minimapX = MINIMAP_PADDING_PX;
         float minimapY = Gdx.graphics.getHeight() - MINIMAP_PADDING_PX - MINIMAP_SIZE_PX;
 
-        game.batch.setColor(1f, 1f, 1f, 0.95f);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+        float mapPad = 12f;
+        uiPanel.draw(game.batch, minimapX - mapPad, minimapY - mapPad, 
+                     MINIMAP_SIZE_PX + mapPad * 2, MINIMAP_SIZE_PX + mapPad * 2);
         game.batch.draw(minimapTexture, minimapX, minimapY, MINIMAP_SIZE_PX, MINIMAP_SIZE_PX);
-        game.batch.setColor(0f, 0f, 0f, 0.85f);
-        game.batch.draw(hudPixel, minimapX - 2, minimapY - 2, MINIMAP_SIZE_PX + 4, 2);
-        game.batch.draw(hudPixel, minimapX - 2, minimapY + MINIMAP_SIZE_PX, MINIMAP_SIZE_PX + 4, 2);
-        game.batch.draw(hudPixel, minimapX - 2, minimapY - 2, 2, MINIMAP_SIZE_PX + 4);
-        game.batch.draw(hudPixel, minimapX + MINIMAP_SIZE_PX, minimapY - 2, 2, MINIMAP_SIZE_PX + 4);
 
         float cameraTileX = camera.position.x / MapConfig.TILE_DRAW_SIZE;
         float cameraTileY = camera.position.y / MapConfig.TILE_DRAW_SIZE;
@@ -1100,46 +1160,42 @@ public class GameScreen extends ScreenAdapter {
         int screenW = Gdx.graphics.getWidth();
         int screenH = Gdx.graphics.getHeight();
 
-        // Dark pill background
-        float panelW = 230f;
-        float panelH = 52f;
+        // Decorative Parchment/Wood Panel background
+        float panelW = 260f;
+        float panelH = 80f;
         float panelX = screenW - panelW - MINIMAP_PADDING_PX;
         float panelY = screenH - panelH - MINIMAP_PADDING_PX;
 
-        game.batch.setColor(0.08f, 0.08f, 0.08f, 0.78f);
-        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
-
-        // Gold border
-        float brd = 1.5f;
-        game.batch.setColor(0.80f, 0.65f, 0.10f, 0.90f);
-        game.batch.draw(hudPixel, panelX,              panelY,              panelW, brd);     // bottom
-        game.batch.draw(hudPixel, panelX,              panelY + panelH - brd, panelW, brd);  // top
-        game.batch.draw(hudPixel, panelX,              panelY,              brd, panelH);     // left
-        game.batch.draw(hudPixel, panelX + panelW - brd, panelY,           brd, panelH);     // right
-
-        // Coin dot
-        float dotSize = 10f;
-        game.batch.setColor(1f, 0.87f, 0.27f, 1f);
-        game.batch.draw(hudPixel, panelX + 10f, panelY + (panelH - dotSize) / 2f, dotSize, dotSize);
         game.batch.setColor(1f, 1f, 1f, 1f);
+        uiPanel.draw(game.batch, panelX, panelY, panelW, panelH);
+
+        // Gold coin icon (animating gently)
+        float iconSize = 42f;
+        float iconBob = (float) Math.sin(animTime * 2f) * 3f;
+        game.batch.draw(uiGoldIcon, panelX + 15f, panelY + (panelH - iconSize) / 2f + iconBob, iconSize, iconSize);
 
         // Gold amount
-        String goldText = ps.formattedGold() + " g";
-        goldFont.setColor(ps.getGold() >= 0 ? new Color(1f, 0.87f, 0.27f, 1f)
-                                            : new Color(1f, 0.25f, 0.25f, 1f));
+        String goldText = String.format("%,d g", (int) displayGold);
+        goldFont.setColor(displayGold >= 0 ? new Color(1f, 0.87f, 0.27f, 1f)
+                                           : new Color(1f, 0.25f, 0.25f, 1f));
         goldFont.draw(game.batch, goldText,
-                panelX + 26f,
-                panelY + panelH - 10f);
+                panelX + iconSize + 25f,
+                panelY + panelH - 20f);
 
         // Year / Month line
-        hudFont.setColor(0.72f, 0.72f, 0.72f, 1f);
+        // Darkened text to look like ink on parchment/wood
+        hudFont.setColor(0.35f, 0.25f, 0.15f, 1f);
         String[] monthNames = {"Jan","Feb","Mar","Apr","May","Jun",
                                "Jul","Aug","Sep","Oct","Nov","Dec"};
         String dateText = "Year " + ps.getYear() + " - " + monthNames[ps.getMonth() - 1];
         hudFont.draw(game.batch, dateText,
-                panelX + 26f,
-                panelY + 18f);
+                panelX + iconSize + 25f,
+                panelY + 30f);
         hudFont.setColor(Color.WHITE);
+
+        // Music Mute status (top-left)
+        String musicStatus = "Music: " + (isMusicMuted ? "OFF" : "ON") + " [M]";
+        hudFont.draw(game.batch, musicStatus, 20f, screenH - 20f);
 
         // ── Bottom Toolbar (Build Menu) ────────────────────────────────
         drawToolbar();
@@ -1162,7 +1218,7 @@ public class GameScreen extends ScreenAdapter {
     // ── Toolbar drawing ──────────────────────────────────────────
 
     private void drawToolbar() {
-        String[] labels = { "[Esc] Pointer", "[R] Road", "[X] Demolish" };
+        TextureRegion[] icons = { uiIconPointer, uiIconRoad, uiIconDemolish };
         int[]    costs  = { 0, PlayerState.COST_ROAD, PlayerState.COST_DEMOLISH };
         BuildMode[] modes = { BuildMode.POINTER, BuildMode.ROAD, BuildMode.DEMOLISH };
 
@@ -1172,41 +1228,35 @@ public class GameScreen extends ScreenAdapter {
             boolean active = buildMode == modes[i];
             boolean affordable = costs[i] == 0 || game.playerState.canAfford(costs[i]);
 
-            // Background
-            if (active) {
-                game.batch.setColor(0.20f, 0.20f, 0.20f, 0.95f);
-            } else {
-                game.batch.setColor(0.10f, 0.10f, 0.10f, 0.80f);
-            }
-            game.batch.draw(hudPixel, bx, by, BTN_W, BTN_H);
-
-            // Border: gold if active, grey otherwise
-            float brd = 1.5f;
-            if (active) {
-                game.batch.setColor(0.85f, 0.70f, 0.15f, 1f);
-            } else if (!affordable) {
-                game.batch.setColor(0.70f, 0.20f, 0.20f, 0.85f);
-            } else {
-                game.batch.setColor(0.40f, 0.40f, 0.40f, 0.70f);
-            }
-            game.batch.draw(hudPixel, bx,              by,              BTN_W, brd);
-            game.batch.draw(hudPixel, bx,              by + BTN_H - brd, BTN_W, brd);
-            game.batch.draw(hudPixel, bx,              by,              brd,   BTN_H);
-            game.batch.draw(hudPixel, bx + BTN_W - brd, by,            brd,   BTN_H);
+            // Background and border
             game.batch.setColor(1f, 1f, 1f, 1f);
-
-            // Label
-            hudFont.setColor(active ? new Color(1f, 0.87f, 0.27f, 1f)
-                    : (affordable ? Color.WHITE : new Color(0.7f, 0.3f, 0.3f, 1f)));
-            hudFont.draw(game.batch, labels[i], bx + 8f, by + BTN_H - 10f);
-
-            // Cost sub-label
-            if (costs[i] > 0) {
-                hudFont.setColor(affordable ? new Color(0.6f, 0.9f, 0.6f, 1f)
-                                           : new Color(0.85f, 0.3f, 0.3f, 1f));
-                hudFont.draw(game.batch, costs[i] + "g / tile", bx + 8f, by + BTN_H - 26f);
+            if (active) {
+                uiButtonActive.draw(game.batch, bx, by, BTN_W, BTN_H);
+            } else {
+                if (!affordable) {
+                    game.batch.setColor(0.9f, 0.4f, 0.4f, 1f); // Tint red for unaffordable
+                }
+                uiButton.draw(game.batch, bx, by, BTN_W, BTN_H);
+                game.batch.setColor(1f, 1f, 1f, 1f); // Revert tint
             }
-            hudFont.setColor(Color.WHITE);
+
+            // Draw Icon
+            float iconSize = 40f;
+            float ix = bx + (BTN_W - iconSize) / 2f;
+            float iy = by + (BTN_H - iconSize) / 2f;
+            
+            if (!affordable) {
+                game.batch.setColor(0.5f, 0.3f, 0.3f, 1f);
+            }
+            game.batch.draw(icons[i], ix, iy, iconSize, iconSize);
+            game.batch.setColor(1f, 1f, 1f, 1f);
+            
+            // Draw shortcut key in top left corner
+            hudFont.getData().setScale(0.8f);
+            String[] shortcuts = {"Esc", "R", "X"};
+            hudFont.setColor(0.8f, 0.8f, 0.8f, 1f);
+            hudFont.draw(game.batch, shortcuts[i], bx + 4f, by + BTN_H - 4f);
+            hudFont.getData().setScale(1f);
         }
     }
 
