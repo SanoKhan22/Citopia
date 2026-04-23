@@ -165,7 +165,7 @@ public class GameScreen extends ScreenAdapter {
         this.woodenCartRegion = safeRegion(AssetId.VEHICLE_WOODEN_CART, rock01Region);
         this.magicTowerRegion = safeRegion(AssetId.PROP_MAGIC_TOWER, rock01Region);
         this.windmillRegion = safeRegion(AssetId.PROP_WINDMILL, houseRegion);
-        this.roadRegion     = game.assets.texture("full_Road.png");
+        this.roadRegion     = game.assets.region("road_desert_dirt");
         this.roadRenderer   = new RoadRenderer(roadRegion, tileMap);
 
         this.minimapPixmap = new Pixmap(tileMap.width(), tileMap.height(), Pixmap.Format.RGBA8888);
