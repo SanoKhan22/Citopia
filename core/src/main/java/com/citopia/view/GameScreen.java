@@ -20,6 +20,9 @@ import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
 import com.citopia.world.ZoneType;
+import com.citopia.world.transport.Caravan;
+import com.citopia.world.transport.CaravanManager;
+import com.citopia.world.transport.RouteNetwork;
 import com.badlogic.gdx.audio.Music;
 import java.util.Random;
 
@@ -45,6 +48,8 @@ public class GameScreen extends ScreenAdapter {
     private final OrthographicCamera camera;
     private final ScreenViewport viewport;
     private final TileMap tileMap;
+    private final RouteNetwork routeNetwork;
+    private final CaravanManager caravanManager;
 
     private final TextureRegion[] groundRegions;
     private final TextureRegion desertSandRegion;
@@ -129,6 +134,10 @@ public class GameScreen extends ScreenAdapter {
         this.camera = new OrthographicCamera();
         this.viewport = new ScreenViewport(camera);
         this.tileMap = new TileMap(MapConfig.MAP_WIDTH_TILES, MapConfig.MAP_HEIGHT_TILES, 42L);
+        this.routeNetwork = new RouteNetwork(this.tileMap);
+        this.routeNetwork.generateNetwork();
+        this.caravanManager = new CaravanManager(this.routeNetwork, this.tileMap);
+        this.caravanManager.seedInitialCaravans(10);
         this.hudFont = new BitmapFont();
         this.hudFont.getData().setScale(1.1f);
 
@@ -823,6 +832,7 @@ public class GameScreen extends ScreenAdapter {
     public void render(float delta) {
         handleInput(delta);
         animTime += delta;
+        caravanManager.update(delta);
 
         // Advance in-game calendar
         monthTimer += delta;
@@ -933,6 +943,9 @@ public class GameScreen extends ScreenAdapter {
         // Layer 6: Roads (player placed)
         drawRoads(startTileX, endTileX, startTileY, endTileY);
 
+        // Layer 6.5: Caravans moving along roads
+        drawCaravans();
+
         // Layer 7: Hover tile highlight (drawn in world space before buildings)
         drawHoverHighlight();
 
@@ -964,6 +977,42 @@ public class GameScreen extends ScreenAdapter {
 
         // Draw HUD for direction
         drawHUD(delta);
+    }
+
+    private void drawCaravans() {
+        for (Caravan caravan : caravanManager.getActiveCaravans()) {
+            float cx = caravan.getPosition().x * MapConfig.TILE_DRAW_SIZE;
+            float cy = caravan.getPosition().y * MapConfig.TILE_DRAW_SIZE;
+            
+            // Draw a subtle shadow under the caravan
+            game.batch.setColor(0f, 0f, 0f, 0.4f);
+            game.batch.draw(hudPixel, cx + 10f, cy + 5f, MapConfig.TILE_DRAW_SIZE - 20f, MapConfig.TILE_DRAW_SIZE - 20f);
+
+            game.batch.setColor(1f, 1f, 1f, 1f);
+            
+            TextureRegion baseRegion = woodenCartRegion;
+            
+            // Draw the base
+            game.batch.draw(baseRegion,
+                cx, cy,
+                MapConfig.TILE_DRAW_SIZE / 2f, MapConfig.TILE_DRAW_SIZE / 2f,
+                MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE,
+                1f, 1f,
+                caravan.getRotation()
+            );
+
+            // Draw extra features for land ship
+            if (caravan.getType() == Caravan.Type.LAND_SHIP) {
+                // Stack a tent as a sail/mast
+                game.batch.draw(tentStandardRegion,
+                    cx, cy + 20f,
+                    MapConfig.TILE_DRAW_SIZE / 2f, MapConfig.TILE_DRAW_SIZE / 2f,
+                    MapConfig.TILE_DRAW_SIZE, MapConfig.TILE_DRAW_SIZE,
+                    1.2f, 1.2f,
+                    0f // the tent acts as a main sail that normally captures the wind
+                );
+            }
+        }
     }
 
     private void drawDirectionalPlanners() {
