@@ -70,6 +70,28 @@ public class TileMap {
                 .orElse(null);
     }
 
+    /**
+     * Returns the city occupying the given tile, or null when the tile is not
+     * part of any city footprint. If faded city footprints ever overlap, the
+     * visually strongest city at that tile wins.
+     */
+    public CitySite cityAt(int x, int y) {
+        if (!inBounds(x, y)) {
+            return null;
+        }
+
+        CitySite selectedCity = null;
+        float selectedAlpha = 0f;
+        for (CitySite city : cities) {
+            float alpha = city.blendAlpha(x, y);
+            if (alpha > selectedAlpha) {
+                selectedCity = city;
+                selectedAlpha = alpha;
+            }
+        }
+        return selectedCity;
+    }
+
     // ── Mutators (called by MapGenerator and player actions) ──────────────────
 
     /** Set a zone type during world generation. */
