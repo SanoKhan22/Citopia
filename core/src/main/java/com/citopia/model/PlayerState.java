@@ -1,5 +1,9 @@
 package com.citopia.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Issue #24 – PlayerState (Economy)
  *
@@ -28,6 +32,8 @@ public class PlayerState {
     private int month  = 1;   // 1-12, cosmetic for now
 
     private final CityBudget budget;
+    private final List<Vehicle> vehicles = new ArrayList<>();
+    private int nextVehicleId = 1;
 
     public PlayerState() {
         this.budget = new CityBudget(STARTING_GOLD, MAX_DEBT);
@@ -38,6 +44,11 @@ public class PlayerState {
     public int getGold()   { return budget.getBalance(); }
     public int getYear()   { return year; }
     public int getMonth()  { return month; }
+    public int getVehicleCount() { return vehicles.size(); }
+
+    public List<Vehicle> getVehicles() {
+        return Collections.unmodifiableList(vehicles);
+    }
 
     /** True if the player can afford a purchase of {@code cost} gold. */
     public boolean canAfford(int cost) {
@@ -62,6 +73,26 @@ public class PlayerState {
         budget.collectTaxes(0, 0);   // zero-pop call just to satisfy interface
         // Direct credit — bypass the population-based formula
         budgetCredit(amount);
+    }
+
+    /**
+     * Buy a vehicle from a selected city market.
+     * Returns the purchased vehicle, or null when the player cannot afford it.
+     */
+    public Vehicle purchaseVehicle(VehicleType type, String homeCityName) {
+        if (type == null) {
+            throw new IllegalArgumentException("Vehicle type is required");
+        }
+        if (homeCityName == null || homeCityName.isBlank()) {
+            throw new IllegalArgumentException("Home city is required");
+        }
+        if (!spend(type.price())) {
+            return null;
+        }
+
+        Vehicle vehicle = new Vehicle(nextVehicleId++, type, homeCityName);
+        vehicles.add(vehicle);
+        return vehicle;
     }
 
     // ── Year/Month tick (called by game loop once per in-game period) ─────────
