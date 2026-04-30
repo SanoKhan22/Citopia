@@ -98,6 +98,7 @@ public class GameScreen extends ScreenAdapter {
     private BuildMode buildMode = BuildMode.POINTER;
     private int hoverTileX = -1;   // world tile the mouse is over
     private int hoverTileY = -1;
+    private CitySite selectedCity;
     /** Feedback message shown bottom-centre (e.g. "Not enough gold!"). Fades over time. */
     private String feedbackMsg  = "";
     private float  feedbackTimer = 0f;
@@ -355,13 +356,23 @@ public class GameScreen extends ScreenAdapter {
                 tileMap.removeRoad(tx, ty);
                 refreshMinimapTile(tx, ty);
             }
-            default -> { /* POINTER – no action */ }
+            case POINTER -> selectCityAt(tx, ty);
         }
     }
 
     private void showFeedback(String msg) {
         feedbackMsg   = msg;
         feedbackTimer = FEEDBACK_DURATION;
+    }
+
+    private void selectCityAt(int tileX, int tileY) {
+        CitySite city = tileMap.cityAt(tileX, tileY);
+        selectedCity = city;
+        if (city == null) {
+            showFeedback("No city at this tile. Select a city footprint or switch tools.");
+            return;
+        }
+        showFeedback("Selected " + city.name);
     }
 
     /** X position of the i-th toolbar button (in screen / HUD coordinates). */
@@ -1030,6 +1041,9 @@ public class GameScreen extends ScreenAdapter {
         // ── Bottom Toolbar (Build Menu) ────────────────────────────────
         drawToolbar();
 
+        // ── Selected City Panel ────────────────────────────────────────
+        drawSelectedCityPanel(screenW, screenH);
+
         // ── Feedback message (centre-bottom) ───────────────────────────
         if (feedbackTimer > 0f) {
             feedbackTimer -= delta;
@@ -1043,6 +1057,83 @@ public class GameScreen extends ScreenAdapter {
         }
 
         game.batch.end();
+    }
+
+    private void drawSelectedCityPanel(int screenW, int screenH) {
+        float panelW = Math.min(300f, Math.max(240f, screenW - 32f));
+        float panelH = 156f;
+        float panelX = Math.max(16f, screenW - panelW - MINIMAP_PADDING_PX);
+        float panelY = screenH - MINIMAP_PADDING_PX - 52f - 12f - panelH;
+        if (panelY < BTN_H + TOOLBAR_PADDING * 2 + 18f) {
+            panelY = BTN_H + TOOLBAR_PADDING * 2 + 18f;
+        }
+
+        game.batch.setColor(0.08f, 0.08f, 0.08f, 0.82f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        float brd = 1.5f;
+        game.batch.setColor(0.80f, 0.65f, 0.10f, 0.90f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY + panelH - brd, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY, brd, panelH);
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY, brd, panelH);
+
+        if (selectedCity == null) {
+            hudFont.setColor(0.80f, 0.72f, 0.52f, 1f);
+            hudFont.draw(game.batch, "No city selected", panelX + 14f, panelY + panelH - 20f);
+            hudFont.setColor(0.64f, 0.64f, 0.64f, 1f);
+            hudFont.draw(game.batch, "Pointer: click a city", panelX + 14f, panelY + panelH - 48f);
+            hudFont.draw(game.batch, "Road: R   Demolish: X", panelX + 14f, panelY + panelH - 72f);
+            hudFont.draw(game.batch, "Esc returns to pointer", panelX + 14f, panelY + panelH - 96f);
+            hudFont.setColor(Color.WHITE);
+            game.batch.setColor(1f, 1f, 1f, 1f);
+            return;
+        }
+
+        hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+        hudFont.draw(game.batch, selectedCity.name, panelX + 14f, panelY + panelH - 18f);
+
+        hudFont.setColor(0.82f, 0.82f, 0.78f, 1f);
+        hudFont.draw(game.batch, "Type: " + cityTypeLabel(selectedCity.type), panelX + 14f, panelY + panelH - 44f);
+        hudFont.draw(game.batch, "Tile: " + selectedCity.centerX + ", " + selectedCity.centerY,
+                panelX + 14f, panelY + panelH - 68f);
+        hudFont.draw(game.batch, "Demand: " + cityDemandLabel(selectedCity.type), panelX + 14f, panelY + panelH - 92f);
+        hudFont.draw(game.batch, "Cargo: " + cityCargoLabel(selectedCity.type), panelX + 14f, panelY + panelH - 116f);
+
+        hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
+        hudFont.draw(game.batch, "Next: connect routes between cities", panelX + 14f, panelY + 18f);
+        hudFont.setColor(Color.WHITE);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private String cityTypeLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Capital trade hub";
+            case NORTH -> "Northern trade town";
+            case SOUTH -> "Southern quarry post";
+            case EAST -> "Eastern caravan gate";
+            case WEST -> "Western oasis market";
+        };
+    }
+
+    private String cityDemandLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Stone blocks, tourists";
+            case NORTH -> "Cotton, papyrus";
+            case SOUTH -> "Gold, stone blocks";
+            case EAST -> "Spices, artifacts";
+            case WEST -> "Dates, figs";
+        };
+    }
+
+    private String cityCargoLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Tourists";
+            case NORTH -> "Cotton";
+            case SOUTH -> "Gold";
+            case EAST -> "Spices";
+            case WEST -> "Dates";
+        };
     }
 
     // ── Toolbar drawing ──────────────────────────────────────────
