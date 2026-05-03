@@ -52,6 +52,16 @@ public class PlayerState {
         return Collections.unmodifiableList(vehicles);
     }
 
+    public int getAssignedVehicleCount() {
+        int assigned = 0;
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.hasRouteAssignment()) {
+                assigned++;
+            }
+        }
+        return assigned;
+    }
+
     public int getRouteCount() { return routes.size(); }
 
     public List<Route> getRoutes() {
@@ -133,6 +143,27 @@ public class PlayerState {
 
         routes.add(route);
         return true;
+    }
+
+    /**
+     * Assign an owned vehicle to an owned route.
+     * Returns false when the vehicle id is not part of the player's fleet.
+     */
+    public boolean assignVehicleToRoute(int vehicleId, Route route) {
+        if (route == null) {
+            throw new IllegalArgumentException("Route is required");
+        }
+        if (!routes.contains(route)) {
+            throw new IllegalArgumentException("Route must belong to the player");
+        }
+
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.id() == vehicleId) {
+                vehicle.assignRoute(route);
+                return true;
+            }
+        }
+        return false;
     }
 
     // ── Year/Month tick (called by game loop once per in-game period) ─────────
