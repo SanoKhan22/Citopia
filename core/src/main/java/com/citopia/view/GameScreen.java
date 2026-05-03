@@ -16,6 +16,8 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.citopia.CitopiaGame;
 import com.citopia.assets.AssetId;
 import com.citopia.model.PlayerState;
+import com.citopia.model.Vehicle;
+import com.citopia.model.VehicleType;
 import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
@@ -99,6 +101,7 @@ public class GameScreen extends ScreenAdapter {
     private int hoverTileX = -1;   // world tile the mouse is over
     private int hoverTileY = -1;
     private CitySite selectedCity;
+    private boolean vehicleMarketOpen;
     /** Feedback message shown bottom-centre (e.g. "Not enough gold!"). Fades over time. */
     private String feedbackMsg  = "";
     private float  feedbackTimer = 0f;
@@ -212,6 +215,7 @@ public class GameScreen extends ScreenAdapter {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
                 if (button == Input.Buttons.LEFT) {
+                    if (vehicleMarketOpen && handleVehicleMarketClick(screenX, screenY)) return true;
                     // Check toolbar button clicks first
                     if (handleToolbarClick(screenX, screenY)) return true;
                     // Otherwise handle world-tile action
@@ -238,10 +242,18 @@ public class GameScreen extends ScreenAdapter {
 
             @Override
             public boolean keyDown(int keycode) {
+                if (vehicleMarketOpen) {
+                    handleVehicleMarketKey(keycode);
+                    return true;
+                }
                 switch (keycode) {
                     case Input.Keys.R -> buildMode = BuildMode.ROAD;
                     case Input.Keys.X -> buildMode = BuildMode.DEMOLISH;
-                    case Input.Keys.ESCAPE -> buildMode = BuildMode.POINTER;
+                    case Input.Keys.V -> openVehicleMarket();
+                    case Input.Keys.ESCAPE -> {
+                        vehicleMarketOpen = false;
+                        buildMode = BuildMode.POINTER;
+                    }
                 }
                 return false;
             }
@@ -369,10 +381,91 @@ public class GameScreen extends ScreenAdapter {
         CitySite city = tileMap.cityAt(tileX, tileY);
         selectedCity = city;
         if (city == null) {
+            vehicleMarketOpen = false;
             showFeedback("No city at this tile. Select a city footprint or switch tools.");
             return;
         }
         showFeedback("Selected " + city.name);
+    }
+
+    private void openVehicleMarket() {
+        if (selectedCity == null) {
+            showFeedback("Select a city before opening the vehicle market.");
+            return;
+        }
+        vehicleMarketOpen = true;
+        buildMode = BuildMode.POINTER;
+        showFeedback("Vehicle market opened for " + selectedCity.name);
+    }
+
+    private boolean handleVehicleMarketKey(int keycode) {
+        if (!vehicleMarketOpen) {
+            return false;
+        }
+        if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.V) {
+            vehicleMarketOpen = false;
+            return true;
+        }
+
+        VehicleType[] types = VehicleType.values();
+        int index = switch (keycode) {
+            case Input.Keys.NUM_1, Input.Keys.NUMPAD_1 -> 0;
+            case Input.Keys.NUM_2, Input.Keys.NUMPAD_2 -> 1;
+            case Input.Keys.NUM_3, Input.Keys.NUMPAD_3 -> 2;
+            case Input.Keys.NUM_4, Input.Keys.NUMPAD_4 -> 3;
+            default -> -1;
+        };
+        if (index >= 0 && index < types.length) {
+            buyVehicle(types[index]);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handleVehicleMarketClick(int screenX, int screenY) {
+        int screenW = Gdx.graphics.getWidth();
+        int screenH = Gdx.graphics.getHeight();
+        int gdxY = screenH - screenY;
+
+        float panelW = Math.min(430f, Math.max(320f, screenW - 32f));
+        float panelH = 300f;
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        if (screenX < panelX || screenX > panelX + panelW || gdxY < panelY || gdxY > panelY + panelH) {
+            vehicleMarketOpen = false;
+            return true;
+        }
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 48f;
+        float firstRowY = panelY + panelH - 88f;
+        VehicleType[] types = VehicleType.values();
+        for (int i = 0; i < types.length; i++) {
+            float rowY = firstRowY - i * (rowH + 8f);
+            if (screenX >= rowX && screenX <= rowX + rowW && gdxY >= rowY && gdxY <= rowY + rowH) {
+                buyVehicle(types[i]);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private void buyVehicle(VehicleType type) {
+        if (selectedCity == null) {
+            showFeedback("Select a city before buying vehicles.");
+            vehicleMarketOpen = false;
+            return;
+        }
+
+        Vehicle vehicle = game.playerState.purchaseVehicle(type, selectedCity.name);
+        if (vehicle == null) {
+            showFeedback("Not enough gold for " + type.displayName() + " (" + type.price() + "g)");
+            return;
+        }
+
+        showFeedback("Purchased " + vehicle.displayName() + " in " + selectedCity.name);
     }
 
     /** X position of the i-th toolbar button (in screen / HUD coordinates). */
@@ -1044,6 +1137,11 @@ public class GameScreen extends ScreenAdapter {
         // ── Selected City Panel ────────────────────────────────────────
         drawSelectedCityPanel(screenW, screenH);
 
+        // ── Vehicle Market Dialog ──────────────────────────────────────
+        if (vehicleMarketOpen) {
+            drawVehicleMarket(screenW, screenH);
+        }
+
         // ── Feedback message (centre-bottom) ───────────────────────────
         if (feedbackTimer > 0f) {
             feedbackTimer -= delta;
@@ -1101,7 +1199,62 @@ public class GameScreen extends ScreenAdapter {
         hudFont.draw(game.batch, "Cargo: " + cityCargoLabel(selectedCity.type), panelX + 14f, panelY + panelH - 116f);
 
         hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
-        hudFont.draw(game.batch, "Next: connect routes between cities", panelX + 14f, panelY + 18f);
+        hudFont.draw(game.batch, "Press V: vehicle market", panelX + 14f, panelY + 18f);
+        hudFont.setColor(Color.WHITE);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawVehicleMarket(int screenW, int screenH) {
+        float panelW = Math.min(430f, Math.max(320f, screenW - 32f));
+        float panelH = 300f;
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        game.batch.setColor(0.04f, 0.03f, 0.02f, 0.92f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        float brd = 2f;
+        game.batch.setColor(0.80f, 0.65f, 0.10f, 1f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY + panelH - brd, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY, brd, panelH);
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY, brd, panelH);
+
+        String title = selectedCity == null ? "Vehicle Market" : selectedCity.name + " Vehicle Market";
+        hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+        hudFont.draw(game.batch, title, panelX + 18f, panelY + panelH - 18f);
+        hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+        hudFont.draw(game.batch, "Click a vehicle or press 1-4. Esc closes.", panelX + 18f, panelY + panelH - 42f);
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 48f;
+        float firstRowY = panelY + panelH - 88f;
+        VehicleType[] types = VehicleType.values();
+        for (int i = 0; i < types.length; i++) {
+            VehicleType type = types[i];
+            boolean affordable = game.playerState.canAfford(type.price());
+            float rowY = firstRowY - i * (rowH + 8f);
+
+            game.batch.setColor(affordable ? 0.14f : 0.20f, affordable ? 0.13f : 0.08f, 0.07f, 0.96f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, rowH);
+            game.batch.setColor(affordable ? 0.62f : 0.50f, affordable ? 0.50f : 0.20f, 0.14f, 0.90f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY + rowH - 1.5f, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY, 1.5f, rowH);
+            game.batch.draw(hudPixel, rowX + rowW - 1.5f, rowY, 1.5f, rowH);
+
+            hudFont.setColor(affordable ? Color.WHITE : new Color(0.84f, 0.42f, 0.36f, 1f));
+            hudFont.draw(game.batch, (i + 1) + ". " + type.displayName() + " - " + type.price() + "g",
+                    rowX + 10f, rowY + rowH - 10f);
+            hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+            String specs = "Cap " + type.capacity() + "  Speed " + type.speed() + "  " + type.role();
+            hudFont.draw(game.batch, specs, rowX + 10f, rowY + 18f);
+        }
+
+        hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
+        hudFont.draw(game.batch, "Owned vehicles: " + game.playerState.getVehicleCount(),
+                panelX + 18f, panelY + 18f);
         hudFont.setColor(Color.WHITE);
         game.batch.setColor(1f, 1f, 1f, 1f);
     }
