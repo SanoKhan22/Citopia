@@ -1,5 +1,6 @@
 package com.citopia.model;
 
+import com.citopia.world.transport.Route;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +34,7 @@ public class PlayerState {
 
     private final CityBudget budget;
     private final List<Vehicle> vehicles = new ArrayList<>();
+    private final List<Route> routes = new ArrayList<>();
     private int nextVehicleId = 1;
 
     public PlayerState() {
@@ -48,6 +50,12 @@ public class PlayerState {
 
     public List<Vehicle> getVehicles() {
         return Collections.unmodifiableList(vehicles);
+    }
+
+    public int getRouteCount() { return routes.size(); }
+
+    public List<Route> getRoutes() {
+        return Collections.unmodifiableList(routes);
     }
 
     /** True if the player can afford a purchase of {@code cost} gold. */
@@ -93,6 +101,38 @@ public class PlayerState {
         Vehicle vehicle = new Vehicle(nextVehicleId++, type, homeCityName);
         vehicles.add(vehicle);
         return vehicle;
+    }
+
+    /**
+     * Add a route to the player's transport network.
+     * Returns false when the same city pair is already connected.
+     */
+    public boolean addRoute(Route route) {
+        if (route == null) {
+            throw new IllegalArgumentException("Route is required");
+        }
+        if (route.getOrigin() == null || route.getDestination() == null) {
+            throw new IllegalArgumentException("Route endpoints are required");
+        }
+        if (route.getPath() == null || route.getPath().isEmpty()) {
+            throw new IllegalArgumentException("Route path is required");
+        }
+        if (route.getOrigin() == route.getDestination()) {
+            throw new IllegalArgumentException("Route must connect two different cities");
+        }
+
+        for (Route existing : routes) {
+            boolean sameDirection = existing.getOrigin() == route.getOrigin()
+                    && existing.getDestination() == route.getDestination();
+            boolean reverseDirection = existing.getOrigin() == route.getDestination()
+                    && existing.getDestination() == route.getOrigin();
+            if (sameDirection || reverseDirection) {
+                return false;
+            }
+        }
+
+        routes.add(route);
+        return true;
     }
 
     // ── Year/Month tick (called by game loop once per in-game period) ─────────

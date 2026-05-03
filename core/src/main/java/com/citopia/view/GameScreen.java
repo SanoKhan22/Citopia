@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -22,6 +23,9 @@ import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
 import com.citopia.world.ZoneType;
+import com.citopia.world.transport.Route;
+import com.citopia.world.transport.RouteNetwork;
+import java.util.List;
 import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
@@ -46,6 +50,7 @@ public class GameScreen extends ScreenAdapter {
     private final OrthographicCamera camera;
     private final ScreenViewport viewport;
     private final TileMap tileMap;
+    private final RouteNetwork routeNetwork;
 
     private final TextureRegion[] groundRegions;
     private final TextureRegion desertSandRegion;
@@ -101,6 +106,7 @@ public class GameScreen extends ScreenAdapter {
     private int hoverTileX = -1;   // world tile the mouse is over
     private int hoverTileY = -1;
     private CitySite selectedCity;
+    private CitySite routeOriginCity;
     private boolean vehicleMarketOpen;
     /** Feedback message shown bottom-centre (e.g. "Not enough gold!"). Fades over time. */
     private String feedbackMsg  = "";
@@ -116,6 +122,8 @@ public class GameScreen extends ScreenAdapter {
         this.camera = new OrthographicCamera();
         this.viewport = new ScreenViewport(camera);
         this.tileMap = new TileMap(MapConfig.MAP_WIDTH_TILES, MapConfig.MAP_HEIGHT_TILES, 42L);
+        this.routeNetwork = new RouteNetwork(tileMap);
+        this.routeNetwork.generateNetwork();
         this.hudFont = new BitmapFont();
         this.hudFont.getData().setScale(1.1f);
 
@@ -247,11 +255,19 @@ public class GameScreen extends ScreenAdapter {
                     return true;
                 }
                 switch (keycode) {
-                    case Input.Keys.R -> buildMode = BuildMode.ROAD;
-                    case Input.Keys.X -> buildMode = BuildMode.DEMOLISH;
+                    case Input.Keys.R -> {
+                        routeOriginCity = null;
+                        buildMode = BuildMode.ROAD;
+                    }
+                    case Input.Keys.X -> {
+                        routeOriginCity = null;
+                        buildMode = BuildMode.DEMOLISH;
+                    }
                     case Input.Keys.V -> openVehicleMarket();
+                    case Input.Keys.C -> startRouteCreation();
                     case Input.Keys.ESCAPE -> {
                         vehicleMarketOpen = false;
+                        routeOriginCity = null;
                         buildMode = BuildMode.POINTER;
                     }
                 }
@@ -334,6 +350,7 @@ public class GameScreen extends ScreenAdapter {
             float by = TOOLBAR_PADDING;
             if (screenX >= bx && screenX <= bx + BTN_W && gdxY >= by && gdxY <= by + BTN_H) {
                 buildMode = modes[i];
+                routeOriginCity = null;
                 return true;
             }
         }
@@ -368,7 +385,7 @@ public class GameScreen extends ScreenAdapter {
                 tileMap.removeRoad(tx, ty);
                 refreshMinimapTile(tx, ty);
             }
-            case POINTER -> selectCityAt(tx, ty);
+            case POINTER -> handlePointerClick(tx, ty);
         }
     }
 
@@ -388,11 +405,59 @@ public class GameScreen extends ScreenAdapter {
         showFeedback("Selected " + city.name);
     }
 
+    private void handlePointerClick(int tileX, int tileY) {
+        if (routeOriginCity != null) {
+            completeRouteCreation(tileX, tileY);
+            return;
+        }
+        selectCityAt(tileX, tileY);
+    }
+
+    private void startRouteCreation() {
+        if (selectedCity == null) {
+            showFeedback("Select a city before creating a route.");
+            return;
+        }
+
+        vehicleMarketOpen = false;
+        buildMode = BuildMode.POINTER;
+        routeOriginCity = selectedCity;
+        showFeedback("Route origin set: " + selectedCity.name + ". Click a destination city.");
+    }
+
+    private void completeRouteCreation(int tileX, int tileY) {
+        CitySite destination = tileMap.cityAt(tileX, tileY);
+        if (destination == null) {
+            showFeedback("Choose a destination city footprint for the route.");
+            return;
+        }
+        if (destination == routeOriginCity) {
+            showFeedback("Route needs a different destination city.");
+            return;
+        }
+
+        Route route = routeNetwork.computeShortestRoute(routeOriginCity, destination);
+        if (route == null) {
+            showFeedback("No road route found. Build roads between those cities first.");
+            return;
+        }
+
+        selectedCity = destination;
+        routeOriginCity = null;
+        if (!game.playerState.addRoute(route)) {
+            showFeedback("Route already exists between those cities.");
+            return;
+        }
+
+        showFeedback("Route created: " + route.getName() + " (" + route.getLength() + " tiles)");
+    }
+
     private void openVehicleMarket() {
         if (selectedCity == null) {
             showFeedback("Select a city before opening the vehicle market.");
             return;
         }
+        routeOriginCity = null;
         vehicleMarketOpen = true;
         buildMode = BuildMode.POINTER;
         showFeedback("Vehicle market opened for " + selectedCity.name);
@@ -838,6 +903,55 @@ public class GameScreen extends ScreenAdapter {
         roadRenderer.drawRoads(game.batch, startTileX, endTileX, startTileY, endTileY);
     }
 
+    private void drawPlayerRoutes(int startTileX, int endTileX, int startTileY, int endTileY) {
+        if (game.playerState.getRouteCount() == 0) {
+            return;
+        }
+
+        game.batch.setColor(0.08f, 0.78f, 0.84f, 0.70f);
+        float markerSize = MapConfig.TILE_DRAW_SIZE * 0.42f;
+        float offset = (MapConfig.TILE_DRAW_SIZE - markerSize) * 0.5f;
+        for (Route route : game.playerState.getRoutes()) {
+            if (route.getPath() == null || route.getPath().isEmpty()) {
+                continue;
+            }
+
+            List<GridPoint2> steps = route.getPath().getSteps();
+            int stride = Math.max(1, steps.size() / 180);
+            for (int i = 0; i < steps.size(); i += stride) {
+                GridPoint2 step = steps.get(i);
+                if (step.x < startTileX || step.x > endTileX || step.y < startTileY || step.y > endTileY) {
+                    continue;
+                }
+                game.batch.draw(hudPixel,
+                        step.x * MapConfig.TILE_DRAW_SIZE + offset,
+                        step.y * MapConfig.TILE_DRAW_SIZE + offset,
+                        markerSize,
+                        markerSize);
+            }
+        }
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawRouteCreationMarker() {
+        if (routeOriginCity == null) {
+            return;
+        }
+
+        float tileSize = MapConfig.TILE_DRAW_SIZE;
+        float drawX = (routeOriginCity.centerX - CitySite.CORE_HALF_SIZE) * tileSize;
+        float drawY = (routeOriginCity.centerY - CitySite.CORE_HALF_SIZE) * tileSize;
+        float size = (CitySite.CORE_HALF_SIZE * 2 + 1) * tileSize;
+        float brd = 4f;
+
+        game.batch.setColor(0.12f, 0.90f, 0.92f, 0.85f);
+        game.batch.draw(hudPixel, drawX, drawY, size, brd);
+        game.batch.draw(hudPixel, drawX, drawY + size - brd, size, brd);
+        game.batch.draw(hudPixel, drawX, drawY, brd, size);
+        game.batch.draw(hudPixel, drawX + size - brd, drawY, brd, size);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
     // ── Hover tile highlight ────────────────────────────────────────
 
     private void drawHoverHighlight() {
@@ -970,6 +1084,8 @@ public class GameScreen extends ScreenAdapter {
 
         // Layer 6: Roads (player placed)
         drawRoads(startTileX, endTileX, startTileY, endTileY);
+        drawPlayerRoutes(startTileX, endTileX, startTileY, endTileY);
+        drawRouteCreationMarker();
 
         // Layer 7: Hover tile highlight (drawn in world space before buildings)
         drawHoverHighlight();
@@ -1159,7 +1275,7 @@ public class GameScreen extends ScreenAdapter {
 
     private void drawSelectedCityPanel(int screenW, int screenH) {
         float panelW = Math.min(300f, Math.max(240f, screenW - 32f));
-        float panelH = 156f;
+        float panelH = 180f;
         float panelX = Math.max(16f, screenW - panelW - MINIMAP_PADDING_PX);
         float panelY = screenH - MINIMAP_PADDING_PX - 52f - 12f - panelH;
         if (panelY < BTN_H + TOOLBAR_PADDING * 2 + 18f) {
@@ -1182,7 +1298,8 @@ public class GameScreen extends ScreenAdapter {
             hudFont.setColor(0.64f, 0.64f, 0.64f, 1f);
             hudFont.draw(game.batch, "Pointer: click a city", panelX + 14f, panelY + panelH - 48f);
             hudFont.draw(game.batch, "Road: R   Demolish: X", panelX + 14f, panelY + panelH - 72f);
-            hudFont.draw(game.batch, "Esc returns to pointer", panelX + 14f, panelY + panelH - 96f);
+            hudFont.draw(game.batch, "Select city, then C route", panelX + 14f, panelY + panelH - 96f);
+            hudFont.draw(game.batch, "Esc returns to pointer", panelX + 14f, panelY + panelH - 120f);
             hudFont.setColor(Color.WHITE);
             game.batch.setColor(1f, 1f, 1f, 1f);
             return;
@@ -1197,9 +1314,13 @@ public class GameScreen extends ScreenAdapter {
                 panelX + 14f, panelY + panelH - 68f);
         hudFont.draw(game.batch, "Demand: " + cityDemandLabel(selectedCity.type), panelX + 14f, panelY + panelH - 92f);
         hudFont.draw(game.batch, "Cargo: " + cityCargoLabel(selectedCity.type), panelX + 14f, panelY + panelH - 116f);
+        hudFont.draw(game.batch, "Routes: " + game.playerState.getRouteCount(), panelX + 14f, panelY + panelH - 140f);
 
         hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
-        hudFont.draw(game.batch, "Press V: vehicle market", panelX + 14f, panelY + 18f);
+        String actionText = routeOriginCity == null
+                ? "V: market   C: create route"
+                : "Route from " + routeOriginCity.name;
+        hudFont.draw(game.batch, actionText, panelX + 14f, panelY + 18f);
         hudFont.setColor(Color.WHITE);
         game.batch.setColor(1f, 1f, 1f, 1f);
     }
