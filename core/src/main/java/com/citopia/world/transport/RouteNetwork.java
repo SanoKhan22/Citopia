@@ -7,7 +7,6 @@ import com.citopia.world.pathfinding.AStarPathfinder;
 import com.citopia.world.pathfinding.Path;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +60,20 @@ public class RouteNetwork {
      * Dynamically computes the precise path between any two cities on the current road network.
      */
     public Route computeShortestRoute(CitySite origin, CitySite destination) {
-        List<GridPoint2> validStarts = getCityRoadAccessPoints(origin);
-        List<GridPoint2> validEnds = getCityRoadAccessPoints(destination);
+        return computeShortestRoute(origin, destination, false);
+    }
+
+    /**
+     * Computes a gameplay route that can enter/leave cities through player-built
+     * roads at the city footprint boundary, not only through generated road exits.
+     */
+    public Route computeFlexibleRoute(CitySite origin, CitySite destination) {
+        return computeShortestRoute(origin, destination, true);
+    }
+
+    private Route computeShortestRoute(CitySite origin, CitySite destination, boolean includeFootprintRoads) {
+        List<GridPoint2> validStarts = getCityRoadAccessPoints(origin, includeFootprintRoads);
+        List<GridPoint2> validEnds = getCityRoadAccessPoints(destination, includeFootprintRoads);
         
         Path bestPath = null;
 
@@ -82,22 +93,62 @@ public class RouteNetwork {
         return new Route(origin, destination, bestPath, generateRouteName(origin, destination, bestPath));
     }
 
-    private List<GridPoint2> getCityRoadAccessPoints(CitySite city) {
+    private List<GridPoint2> getCityRoadAccessPoints(CitySite city, boolean includeFootprintRoads) {
         List<GridPoint2> accessPoints = new ArrayList<>();
-        
+
         if (city.type == CitySite.CityType.CAPITAL) {
             // Capital roads terminate exactly at its core boundaries
             int half = CitySite.CORE_HALF_SIZE;
-            accessPoints.add(new GridPoint2(city.centerX, city.centerY + half + 1)); // North exit
-            accessPoints.add(new GridPoint2(city.centerX, city.centerY - half - 1)); // South exit
-            accessPoints.add(new GridPoint2(city.centerX + half + 1, city.centerY)); // East exit
-            accessPoints.add(new GridPoint2(city.centerX - half - 1, city.centerY)); // West exit
+            addIfRoad(accessPoints, city.centerX, city.centerY + half + 1); // North exit
+            addIfRoad(accessPoints, city.centerX, city.centerY - half - 1); // South exit
+            addIfRoad(accessPoints, city.centerX + half + 1, city.centerY); // East exit
+            addIfRoad(accessPoints, city.centerX - half - 1, city.centerY); // West exit
         } else {
             // Outer cities have roads converging precisely at their center coordinate
-            accessPoints.add(new GridPoint2(city.centerX, city.centerY));
+            addIfRoad(accessPoints, city.centerX, city.centerY);
         }
-        
+
+        if (includeFootprintRoads) {
+            addCityFootprintRoads(city, accessPoints);
+        }
         return accessPoints;
+    }
+
+    private void addCityFootprintRoads(CitySite city, List<GridPoint2> accessPoints) {
+        int minX = Math.max(0, city.centerX - CitySite.FADE_HALF_SIZE);
+        int maxX = Math.min(map.width() - 1, city.centerX + CitySite.FADE_HALF_SIZE);
+        int minY = Math.max(0, city.centerY - CitySite.FADE_HALF_SIZE);
+        int maxY = Math.min(map.height() - 1, city.centerY + CitySite.FADE_HALF_SIZE);
+
+        for (int y = minY; y <= maxY; y++) {
+            for (int x = minX; x <= maxX; x++) {
+                if (city.contains(x, y) && map.hasRoad(x, y) && isCityRoadBoundaryAccess(city, x, y)) {
+                    addIfRoad(accessPoints, x, y);
+                }
+            }
+        }
+    }
+
+    private boolean isCityRoadBoundaryAccess(CitySite city, int x, int y) {
+        int[][] directions = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} };
+        for (int[] direction : directions) {
+            int nx = x + direction[0];
+            int ny = y + direction[1];
+            if (map.inBounds(nx, ny) && map.hasRoad(nx, ny) && !city.contains(nx, ny)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addIfRoad(List<GridPoint2> accessPoints, int x, int y) {
+        if (!map.inBounds(x, y) || !map.hasRoad(x, y)) {
+            return;
+        }
+        GridPoint2 point = new GridPoint2(x, y);
+        if (!accessPoints.contains(point)) {
+            accessPoints.add(point);
+        }
     }
 
     private String generateRouteName(CitySite origin, CitySite destination, Path path) {

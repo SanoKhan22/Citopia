@@ -116,6 +116,7 @@ public class GameScreen extends ScreenAdapter {
     // Economy: in-game time accumulator (1 month = 30 real seconds at normal speed)
     private static final float MONTH_DURATION_SECONDS = 30f;
     private float monthTimer = 0f;
+    private float prototypeVehicleTimer = 0f;
 
     public GameScreen(CitopiaGame game) {
         this.game = game;
@@ -436,7 +437,7 @@ public class GameScreen extends ScreenAdapter {
             return;
         }
 
-        Route route = routeNetwork.computeShortestRoute(routeOriginCity, destination);
+        Route route = routeNetwork.computeFlexibleRoute(routeOriginCity, destination);
         if (route == null) {
             showFeedback("No road route found. Build roads between those cities first.");
             return;
@@ -912,11 +913,12 @@ public class GameScreen extends ScreenAdapter {
         float markerSize = MapConfig.TILE_DRAW_SIZE * 0.42f;
         float offset = (MapConfig.TILE_DRAW_SIZE - markerSize) * 0.5f;
         for (Route route : game.playerState.getRoutes()) {
-            if (route.getPath() == null || route.getPath().isEmpty()) {
+            Route currentRoute = currentRouteForDisplay(route);
+            if (currentRoute.getPath() == null || currentRoute.getPath().isEmpty()) {
                 continue;
             }
 
-            List<GridPoint2> steps = route.getPath().getSteps();
+            List<GridPoint2> steps = currentRoute.getPath().getSteps();
             int stride = Math.max(1, steps.size() / 180);
             for (int i = 0; i < steps.size(); i += stride) {
                 GridPoint2 step = steps.get(i);
@@ -931,6 +933,106 @@ public class GameScreen extends ScreenAdapter {
             }
         }
         game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawPrototypeVehicles(int startTileX, int endTileX, int startTileY, int endTileY) {
+        List<Vehicle> vehicles = game.playerState.getVehicles();
+        if (vehicles.isEmpty()) {
+            return;
+        }
+
+        List<Route> routes = game.playerState.getRoutes();
+        for (int i = 0; i < vehicles.size(); i++) {
+            Vehicle vehicle = vehicles.get(i);
+            if (routes.isEmpty()) {
+                CitySite homeCity = cityByName(vehicle.homeCityName());
+                if (homeCity != null) {
+                    drawPrototypeVehicleAt(homeCity.centerX + parkedVehicleOffsetX(i),
+                            homeCity.centerY + parkedVehicleOffsetY(i), vehicle);
+                }
+                continue;
+            }
+
+            Route route = currentRouteForDisplay(routes.get(Math.floorMod(vehicle.id() - 1, routes.size())));
+            GridPoint2 routeStep = animatedVehicleStep(vehicle, route);
+            if (routeStep == null) {
+                continue;
+            }
+            if (routeStep.x < startTileX - 2 || routeStep.x > endTileX + 2
+                    || routeStep.y < startTileY - 2 || routeStep.y > endTileY + 2) {
+                continue;
+            }
+            drawPrototypeVehicleAt(routeStep.x + vehicleLaneOffset(i), routeStep.y + vehicleLaneOffset(i), vehicle);
+        }
+    }
+
+    private Route currentRouteForDisplay(Route route) {
+        Route currentRoute = routeNetwork.computeFlexibleRoute(route.getOrigin(), route.getDestination());
+        return currentRoute == null ? route : currentRoute;
+    }
+
+    private GridPoint2 animatedVehicleStep(Vehicle vehicle, Route route) {
+        if (route.getPath() == null || route.getPath().isEmpty()) {
+            return null;
+        }
+
+        List<GridPoint2> steps = route.getPath().getSteps();
+        if (steps.size() == 1) {
+            return steps.get(0);
+        }
+
+        int loopLength = (steps.size() - 1) * 2;
+        float speedTilesPerSecond = Math.max(2f, vehicle.type().speed() * 0.55f);
+        int loopIndex = (int) ((prototypeVehicleTimer * speedTilesPerSecond + vehicle.id() * 9f) % loopLength);
+        int stepIndex = loopIndex < steps.size() ? loopIndex : loopLength - loopIndex;
+        return steps.get(stepIndex);
+    }
+
+    private void drawPrototypeVehicleAt(float tileX, float tileY, Vehicle vehicle) {
+        float tileSize = MapConfig.TILE_DRAW_SIZE;
+        float size = tileSize * 1.55f;
+        float x = tileX * tileSize + (tileSize - size) * 0.5f;
+        float y = tileY * tileSize + (tileSize - size) * 0.5f;
+
+        game.batch.setColor(0f, 0f, 0f, 0.35f);
+        game.batch.draw(hudPixel, x + size * 0.15f, y - size * 0.05f, size * 0.82f, size * 0.28f);
+
+        game.batch.setColor(1f, 1f, 1f, 1f);
+        game.batch.draw(woodenCartRegion, x, y, size, size);
+
+        game.batch.setColor(vehicleMarkerColor(vehicle));
+        game.batch.draw(hudPixel, x + size * 0.64f, y + size * 0.70f, size * 0.22f, size * 0.22f);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private Color vehicleMarkerColor(Vehicle vehicle) {
+        return switch (vehicle.type()) {
+            case DONKEY_CARAVAN -> new Color(0.92f, 0.82f, 0.56f, 1f);
+            case CAMEL_TRAIN -> new Color(0.95f, 0.62f, 0.25f, 1f);
+            case FELUCCA_BOAT -> new Color(0.20f, 0.66f, 0.95f, 1f);
+            case CARGO_BARGE -> new Color(0.68f, 0.45f, 0.24f, 1f);
+        };
+    }
+
+    private CitySite cityByName(String name) {
+        for (CitySite city : tileMap.cities()) {
+            if (city.name.equals(name)) {
+                return city;
+            }
+        }
+        return null;
+    }
+
+    private float parkedVehicleOffsetX(int index) {
+        return -4f + (index % 4) * 2.5f;
+    }
+
+    private float parkedVehicleOffsetY(int index) {
+        return -3.5f + (index / 4) * 2.5f;
+    }
+
+    private float vehicleLaneOffset(int index) {
+        return ((index % 3) - 1) * 0.18f;
     }
 
     private void drawRouteCreationMarker() {
@@ -990,6 +1092,7 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         handleInput(delta);
+        prototypeVehicleTimer += delta;
 
         // Advance in-game calendar
         monthTimer += delta;
@@ -1085,6 +1188,7 @@ public class GameScreen extends ScreenAdapter {
         // Layer 6: Roads (player placed)
         drawRoads(startTileX, endTileX, startTileY, endTileY);
         drawPlayerRoutes(startTileX, endTileX, startTileY, endTileY);
+        drawPrototypeVehicles(startTileX, endTileX, startTileY, endTileY);
         drawRouteCreationMarker();
 
         // Layer 7: Hover tile highlight (drawn in world space before buildings)
