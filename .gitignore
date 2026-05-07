@@ -59,3 +59,4 @@ wiki.md
 
 build_old/
 .local-build/
+.gradle-local/

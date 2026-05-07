@@ -26,6 +26,7 @@ task run(dependsOn: classes, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
     workingDir = project.assetsDir
+    jvmArgs += "-XstartOnFirstThread"
     ignoreExitValue = true
 }
 
