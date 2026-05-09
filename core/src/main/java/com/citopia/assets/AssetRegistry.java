@@ -1,17 +1,38 @@
 package com.citopia.assets;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.utils.Disposable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AssetRegistry implements Disposable {
 
     private static final String INDEXED_NAME_PATTERN = "^(.*)_([0-9]+)$";
 
     private final TextureAtlas atlas;
+    private final Map<String, Texture> standaloneTextures = new HashMap<>();
+    private final Map<String, Music> musicFiles = new HashMap<>();
 
     public AssetRegistry() {
         this.atlas = new TextureAtlas("atlas/game-assets.atlas");
+    }
+    
+    /** Load background music or long play audio. */
+    public Music music(String filePath) {
+        return musicFiles.computeIfAbsent(filePath,
+                path -> Gdx.audio.newMusic(Gdx.files.internal(path)));
+    }
+
+    /** Load a standalone PNG file (not in the atlas) by its internal path, e.g. "full_Road.png" */
+    public TextureRegion texture(String filePath) {
+        Texture tex = standaloneTextures.computeIfAbsent(filePath,
+                path -> new Texture(Gdx.files.internal(path)));
+        return new TextureRegion(tex);
     }
 
     public TextureRegion region(AssetId assetId) {
@@ -39,5 +60,9 @@ public class AssetRegistry implements Disposable {
     @Override
     public void dispose() {
         atlas.dispose();
+        standaloneTextures.values().forEach(Texture::dispose);
+        standaloneTextures.clear();
+        musicFiles.values().forEach(Music::dispose);
+        musicFiles.clear();
     }
 }

@@ -34,7 +34,24 @@ public enum AssetId {
     PROP_TREE_8("tree_8"),
     PROP_TREE_LARGE("Top-Down Simple Summer_prop - Tree Large"),
     PROP_TREE_10("tree_10"),
-    PROP_TREE_MEDIUM("Top-Down Simple Summer_Prop - Tree Medium");
+    PROP_TREE_MEDIUM("Top-Down Simple Summer_Prop - Tree Medium"),
+    PROP_CASTLE_ROUND("Top-Down Simple Summer_Prop - Castle Round"),
+    PROP_CASTLE_SQUARE("Top-Down Simple Summer_Prop - Castle Square"),
+    PROP_HOUSE_SUMMER("Top-Down Simple Summer_Prop - House"),
+    PROP_BLUE_BANNER("Top-Down Simple Summer_Prop - Blue Banner"),
+    PROP_ROCK_01_SUMMER("Top-Down Simple Summer_Prop - Rock 01"),
+    PROP_ROCK_02_SUMMER("Top-Down Simple Summer_Prop - Rock 02"),
+    PROP_ROCK_03_SUMMER("Top-Down Simple Summer_Prop - Rock 03"),
+    PROP_ROCK_04_SUMMER("Top-Down Simple Summer_Prop - Rock 04"),
+    PROP_ROCK_05_SUMMER("Top-Down Simple Summer_Prop - Rock 05"),
+    PROP_CAMPFIRE_SUMMER("Top-Down Simple Summer_Prop - Campfire"),
+    PROP_CAMP_TENT_1("Top-Down Simple Summer_Prop - Tent"),
+    PROP_CAMP_TENT_2("desertTent"),
+    PROP_DEAD_TREE_1("dead_tree_11"),
+    PROP_DEAD_TREE_2("dead_tree_12"),
+    PROP_DECOR_8("decor_8"),
+    PROP_MAGIC_TOWER("Top-Down Simple Summer_Prop - Magic Stone Tower"),
+    PROP_WINDMILL("Top-Down Simple Summer_Prop - Windmill");
 
     private final String regionName;
 

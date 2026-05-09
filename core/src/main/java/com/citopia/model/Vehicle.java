@@ -1,73 +1,58 @@
 package com.citopia.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.citopia.world.transport.Route;
 
 public class Vehicle {
-    public enum VehicleState {
-        IDLE, IN_TRANSIT, LOADING, UNLOADING
-    }
 
-    private final String id;
-    private final String name;
-    private final float speed;
-    private final int capacity;
-    
-    private final List<Cargo> loadedCargo;
-    private City currentLocation;
-    private VehicleState state;
+    private final int id;
+    private final VehicleType type;
+    private final String homeCityName;
+    private Route assignedRoute;
 
-    public Vehicle(String id, String name, float speed, int capacity, City initialLocation) {
-        if (id == null || name == null || initialLocation == null) {
-            throw new IllegalArgumentException("Id, name, and initial location cannot be null.");
+    public Vehicle(int id, VehicleType type, String homeCityName) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Vehicle id must be positive");
         }
-        if (capacity <= 0 || speed <= 0) {
-            throw new IllegalArgumentException("Capacity and speed must be strictly positive.");
+        if (type == null) {
+            throw new IllegalArgumentException("Vehicle type is required");
         }
+        if (homeCityName == null || homeCityName.isBlank()) {
+            throw new IllegalArgumentException("Home city is required");
+        }
+
         this.id = id;
-        this.name = name;
-        this.speed = speed;
-        this.capacity = capacity;
-        this.currentLocation = initialLocation;
-        this.state = VehicleState.IDLE;
-        this.loadedCargo = new ArrayList<>();
+        this.type = type;
+        this.homeCityName = homeCityName.trim();
     }
 
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public float getSpeed() { return speed; }
-    public int getCapacity() { return capacity; }
-    
-    public City getCurrentLocation() { return currentLocation; }
-    public void setCurrentLocation(City location) { this.currentLocation = location; }
-    
-    public VehicleState getState() { return state; }
-    public void setState(VehicleState state) { this.state = state; }
-    
-    public List<Cargo> getLoadedCargo() {
-        return Collections.unmodifiableList(loadedCargo);
-    }
-    
-    public int getCurrentLoadWeight() {
-        return loadedCargo.stream().mapToInt(Cargo::getWeight).sum();
+    public int id() {
+        return id;
     }
 
-    public boolean loadCargo(Cargo cargo) {
-        if (getCurrentLoadWeight() + cargo.getWeight() <= capacity) {
-            return loadedCargo.add(cargo);
+    public VehicleType type() {
+        return type;
+    }
+
+    public String homeCityName() {
+        return homeCityName;
+    }
+
+    public String displayName() {
+        return type.displayName() + " #" + id;
+    }
+
+    public Route assignedRoute() {
+        return assignedRoute;
+    }
+
+    public boolean hasRouteAssignment() {
+        return assignedRoute != null;
+    }
+
+    void assignRoute(Route route) {
+        if (route == null) {
+            throw new IllegalArgumentException("Route is required");
         }
-        return false; // Not enough capacity
-    }
-    
-    public boolean unloadCargo(Cargo cargo) {
-        return loadedCargo.remove(cargo);
-    }
-
-    @Override
-    public String toString() {
-        return String.format("Vehicle{id='%s', name='%s', state=%s, loc=%s, load=%d/%d}",
-                id, name, state, currentLocation != null ? currentLocation.getName() : "null", 
-                getCurrentLoadWeight(), capacity);
+        assignedRoute = route;
     }
 }
