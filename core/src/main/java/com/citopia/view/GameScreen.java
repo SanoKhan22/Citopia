@@ -10,20 +10,25 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.GridPoint2;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.citopia.CitopiaGame;
 import com.citopia.assets.AssetId;
 import com.citopia.model.PlayerState;
+import com.citopia.model.Vehicle;
+import com.citopia.model.VehicleType;
 import com.citopia.world.CitySite;
 import com.citopia.world.MapConfig;
 import com.citopia.world.TileMap;
 import com.citopia.world.ZoneType;
 import com.citopia.world.transport.Caravan;
 import com.citopia.world.transport.CaravanManager;
+import com.citopia.world.transport.Route;
 import com.citopia.world.transport.RouteNetwork;
 import com.badlogic.gdx.audio.Music;
+import java.util.List;
 import java.util.Random;
 
 public class GameScreen extends ScreenAdapter {
@@ -117,6 +122,11 @@ public class GameScreen extends ScreenAdapter {
     private BuildMode buildMode = BuildMode.POINTER;
     private int hoverTileX = -1;   // world tile the mouse is over
     private int hoverTileY = -1;
+    private CitySite selectedCity;
+    private CitySite routeOriginCity;
+    private boolean vehicleMarketOpen;
+    private boolean routeAssignmentOpen;
+    private int assignmentRouteIndex;
     /** Feedback message shown bottom-centre (e.g. "Not enough gold!"). Fades over time. */
     private String feedbackMsg  = "";
     private float  feedbackTimer = 0f;
@@ -125,6 +135,7 @@ public class GameScreen extends ScreenAdapter {
     // Economy: in-game time accumulator (1 month = 30 real seconds at normal speed)
     private static final float MONTH_DURATION_SECONDS = 30f;
     private float monthTimer = 0f;
+    private float prototypeVehicleTimer = 0f;
 
     // Animation timer (accumulated real-time for visual effects)
     private float animTime = 0f;
@@ -262,6 +273,8 @@ public class GameScreen extends ScreenAdapter {
             @Override
             public boolean touchDown(int screenX, int screenY, int pointer, int button) {
                 if (button == Input.Buttons.LEFT) {
+                    if (routeAssignmentOpen && handleRouteAssignmentClick(screenX, screenY)) return true;
+                    if (vehicleMarketOpen && handleVehicleMarketClick(screenX, screenY)) return true;
                     // Check toolbar button clicks first
                     if (handleToolbarClick(screenX, screenY)) return true;
                     // Otherwise handle world-tile action
@@ -288,10 +301,23 @@ public class GameScreen extends ScreenAdapter {
 
             @Override
             public boolean keyDown(int keycode) {
+                if (routeAssignmentOpen) {
+                    handleRouteAssignmentKey(keycode);
+                    return true;
+                }
+                if (vehicleMarketOpen) {
+                    handleVehicleMarketKey(keycode);
+                    return true;
+                }
                 switch (keycode) {
-                    case Input.Keys.R -> buildMode = BuildMode.ROAD;
-                    case Input.Keys.X -> buildMode = BuildMode.DEMOLISH;
-                    case Input.Keys.ESCAPE -> buildMode = BuildMode.POINTER;
+                    case Input.Keys.R -> {
+                        routeOriginCity = null;
+                        buildMode = BuildMode.ROAD;
+                    }
+                    case Input.Keys.X -> {
+                        routeOriginCity = null;
+                        buildMode = BuildMode.DEMOLISH;
+                    }
                     case Input.Keys.M -> {
                         isMusicMuted = !isMusicMuted;
                         if (isMusicMuted) {
@@ -299,6 +325,15 @@ public class GameScreen extends ScreenAdapter {
                         } else {
                             bgm.play();
                         }
+                    }
+                    case Input.Keys.V -> openVehicleMarket();
+                    case Input.Keys.C -> startRouteCreation();
+                    case Input.Keys.F -> openRouteAssignmentDialog();
+                    case Input.Keys.ESCAPE -> {
+                        vehicleMarketOpen = false;
+                        routeAssignmentOpen = false;
+                        routeOriginCity = null;
+                        buildMode = BuildMode.POINTER;
                     }
                 }
                 return false;
@@ -380,6 +415,8 @@ public class GameScreen extends ScreenAdapter {
             float by = TOOLBAR_PADDING;
             if (screenX >= bx && screenX <= bx + BTN_W && gdxY >= by && gdxY <= by + BTN_H) {
                 buildMode = modes[i];
+                routeOriginCity = null;
+                routeAssignmentOpen = false;
                 return true;
             }
         }
@@ -414,13 +451,286 @@ public class GameScreen extends ScreenAdapter {
                 tileMap.removeRoad(tx, ty);
                 refreshMinimapTile(tx, ty);
             }
-            default -> { /* POINTER – no action */ }
+            case POINTER -> handlePointerClick(tx, ty);
         }
     }
 
     private void showFeedback(String msg) {
         feedbackMsg   = msg;
         feedbackTimer = FEEDBACK_DURATION;
+    }
+
+    private void selectCityAt(int tileX, int tileY) {
+        CitySite city = tileMap.cityAt(tileX, tileY);
+        selectedCity = city;
+        if (city == null) {
+            vehicleMarketOpen = false;
+            routeAssignmentOpen = false;
+            showFeedback("No city at this tile. Select a city footprint or switch tools.");
+            return;
+        }
+        showFeedback("Selected " + city.name);
+    }
+
+    private void handlePointerClick(int tileX, int tileY) {
+        if (routeOriginCity != null) {
+            completeRouteCreation(tileX, tileY);
+            return;
+        }
+        selectCityAt(tileX, tileY);
+    }
+
+    private void startRouteCreation() {
+        if (selectedCity == null) {
+            showFeedback("Select a city before creating a route.");
+            return;
+        }
+
+        vehicleMarketOpen = false;
+        routeAssignmentOpen = false;
+        buildMode = BuildMode.POINTER;
+        routeOriginCity = selectedCity;
+        showFeedback("Route origin set: " + selectedCity.name + ". Click a destination city.");
+    }
+
+    private void completeRouteCreation(int tileX, int tileY) {
+        CitySite destination = tileMap.cityAt(tileX, tileY);
+        if (destination == null) {
+            showFeedback("Choose a destination city footprint for the route.");
+            return;
+        }
+        if (destination == routeOriginCity) {
+            showFeedback("Route needs a different destination city.");
+            return;
+        }
+
+        Route route = routeNetwork.computeFlexibleRoute(routeOriginCity, destination);
+        if (route == null) {
+            showFeedback("No road route found. Build roads between those cities first.");
+            return;
+        }
+
+        selectedCity = destination;
+        routeOriginCity = null;
+        routeAssignmentOpen = false;
+        if (!game.playerState.addRoute(route)) {
+            showFeedback("Route already exists between those cities.");
+            return;
+        }
+
+        showFeedback("Route created: " + route.getName() + " (" + route.getLength() + " tiles)");
+    }
+
+    private void openVehicleMarket() {
+        if (selectedCity == null) {
+            showFeedback("Select a city before opening the vehicle market.");
+            return;
+        }
+        routeOriginCity = null;
+        routeAssignmentOpen = false;
+        vehicleMarketOpen = true;
+        buildMode = BuildMode.POINTER;
+        showFeedback("Vehicle market opened for " + selectedCity.name);
+    }
+
+    private boolean handleVehicleMarketKey(int keycode) {
+        if (!vehicleMarketOpen) {
+            return false;
+        }
+        if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.V) {
+            vehicleMarketOpen = false;
+            return true;
+        }
+
+        VehicleType[] types = VehicleType.values();
+        int index = numberKeyIndex(keycode);
+        if (index >= 0 && index < types.length) {
+            buyVehicle(types[index]);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handleVehicleMarketClick(int screenX, int screenY) {
+        int screenW = Gdx.graphics.getWidth();
+        int screenH = Gdx.graphics.getHeight();
+        int gdxY = screenH - screenY;
+
+        float panelW = Math.min(430f, Math.max(320f, screenW - 32f));
+        float panelH = 300f;
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        if (screenX < panelX || screenX > panelX + panelW || gdxY < panelY || gdxY > panelY + panelH) {
+            vehicleMarketOpen = false;
+            return true;
+        }
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 48f;
+        float firstRowY = panelY + panelH - 88f;
+        VehicleType[] types = VehicleType.values();
+        for (int i = 0; i < types.length; i++) {
+            float rowY = firstRowY - i * (rowH + 8f);
+            if (screenX >= rowX && screenX <= rowX + rowW && gdxY >= rowY && gdxY <= rowY + rowH) {
+                buyVehicle(types[i]);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private void buyVehicle(VehicleType type) {
+        if (selectedCity == null) {
+            showFeedback("Select a city before buying vehicles.");
+            vehicleMarketOpen = false;
+            return;
+        }
+
+        Vehicle vehicle = game.playerState.purchaseVehicle(type, selectedCity.name);
+        if (vehicle == null) {
+            showFeedback("Not enough gold for " + type.displayName() + " (" + type.price() + "g)");
+            return;
+        }
+
+        showFeedback("Purchased " + vehicle.displayName() + " in " + selectedCity.name);
+    }
+
+    private void openRouteAssignmentDialog() {
+        if (game.playerState.getVehicleCount() == 0) {
+            showFeedback("Buy a vehicle before assigning routes.");
+            return;
+        }
+        if (game.playerState.getRouteCount() == 0) {
+            showFeedback("Create a route before assigning vehicles.");
+            return;
+        }
+
+        vehicleMarketOpen = false;
+        routeOriginCity = null;
+        buildMode = BuildMode.POINTER;
+        assignmentRouteIndex = Math.min(assignmentRouteIndex, game.playerState.getRouteCount() - 1);
+        routeAssignmentOpen = true;
+        showFeedback("Fleet assignment opened. Choose a vehicle for the selected route.");
+    }
+
+    private boolean handleRouteAssignmentKey(int keycode) {
+        if (!routeAssignmentOpen) {
+            return false;
+        }
+        if (keycode == Input.Keys.ESCAPE || keycode == Input.Keys.F) {
+            routeAssignmentOpen = false;
+            return true;
+        }
+        if (keycode == Input.Keys.LEFT || keycode == Input.Keys.UP) {
+            cycleAssignmentRoute(-1);
+            return true;
+        }
+        if (keycode == Input.Keys.RIGHT || keycode == Input.Keys.DOWN) {
+            cycleAssignmentRoute(1);
+            return true;
+        }
+
+        int vehicleIndex = numberKeyIndex(keycode);
+        List<Vehicle> vehicles = game.playerState.getVehicles();
+        if (vehicleIndex >= 0 && vehicleIndex < vehicles.size() && vehicleIndex < 5) {
+            assignVehicleToSelectedRoute(vehicles.get(vehicleIndex));
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handleRouteAssignmentClick(int screenX, int screenY) {
+        int screenW = Gdx.graphics.getWidth();
+        int screenH = Gdx.graphics.getHeight();
+        int gdxY = screenH - screenY;
+
+        float panelW = Math.min(520f, Math.max(360f, screenW - 32f));
+        float panelH = Math.min(410f, Math.max(320f, screenH - 32f));
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        if (screenX < panelX || screenX > panelX + panelW || gdxY < panelY || gdxY > panelY + panelH) {
+            routeAssignmentOpen = false;
+            return true;
+        }
+
+        float routeBoxX = panelX + 18f;
+        float routeBoxY = panelY + panelH - 116f;
+        float routeBoxW = panelW - 36f;
+        float routeBoxH = 48f;
+        if (screenX >= routeBoxX && screenX <= routeBoxX + routeBoxW
+                && gdxY >= routeBoxY && gdxY <= routeBoxY + routeBoxH) {
+            cycleAssignmentRoute(1);
+            return true;
+        }
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 42f;
+        float firstRowY = panelY + panelH - 166f;
+        List<Vehicle> vehicles = game.playerState.getVehicles();
+        int displayCount = Math.min(5, vehicles.size());
+        for (int i = 0; i < displayCount; i++) {
+            float rowY = firstRowY - i * (rowH + 6f);
+            if (screenX >= rowX && screenX <= rowX + rowW && gdxY >= rowY && gdxY <= rowY + rowH) {
+                assignVehicleToSelectedRoute(vehicles.get(i));
+                return true;
+            }
+        }
+        return true;
+    }
+
+    private void cycleAssignmentRoute(int direction) {
+        int routeCount = game.playerState.getRouteCount();
+        if (routeCount == 0) {
+            assignmentRouteIndex = 0;
+            return;
+        }
+        assignmentRouteIndex = Math.floorMod(assignmentRouteIndex + direction, routeCount);
+    }
+
+    private void assignVehicleToSelectedRoute(Vehicle vehicle) {
+        Route route = selectedAssignmentRoute();
+        if (route == null) {
+            routeAssignmentOpen = false;
+            showFeedback("Create a route before assigning vehicles.");
+            return;
+        }
+        if (!game.playerState.assignVehicleToRoute(vehicle.id(), route)) {
+            showFeedback("Vehicle is no longer available.");
+            return;
+        }
+        showFeedback(vehicle.displayName() + " assigned to " + routeSummary(route));
+    }
+
+    private Route selectedAssignmentRoute() {
+        List<Route> routes = game.playerState.getRoutes();
+        if (routes.isEmpty()) {
+            return null;
+        }
+        assignmentRouteIndex = Math.max(0, Math.min(assignmentRouteIndex, routes.size() - 1));
+        return routes.get(assignmentRouteIndex);
+    }
+
+    private int numberKeyIndex(int keycode) {
+        return switch (keycode) {
+            case Input.Keys.NUM_1, Input.Keys.NUMPAD_1 -> 0;
+            case Input.Keys.NUM_2, Input.Keys.NUMPAD_2 -> 1;
+            case Input.Keys.NUM_3, Input.Keys.NUMPAD_3 -> 2;
+            case Input.Keys.NUM_4, Input.Keys.NUMPAD_4 -> 3;
+            case Input.Keys.NUM_5, Input.Keys.NUMPAD_5 -> 4;
+            case Input.Keys.NUM_6, Input.Keys.NUMPAD_6 -> 5;
+            case Input.Keys.NUM_7, Input.Keys.NUMPAD_7 -> 6;
+            case Input.Keys.NUM_8, Input.Keys.NUMPAD_8 -> 7;
+            case Input.Keys.NUM_9, Input.Keys.NUMPAD_9 -> 8;
+            default -> -1;
+        };
+    }
+
+    private String routeSummary(Route route) {
+        return route.getOrigin().name + " to " + route.getDestination().name;
     }
 
     /** X position of the i-th toolbar button (in screen / HUD coordinates). */
@@ -793,6 +1103,156 @@ public class GameScreen extends ScreenAdapter {
         roadRenderer.drawRoads(game.batch, startTileX, endTileX, startTileY, endTileY);
     }
 
+    private void drawPlayerRoutes(int startTileX, int endTileX, int startTileY, int endTileY) {
+        if (game.playerState.getRouteCount() == 0) {
+            return;
+        }
+
+        game.batch.setColor(0.08f, 0.78f, 0.84f, 0.70f);
+        float markerSize = MapConfig.TILE_DRAW_SIZE * 0.42f;
+        float offset = (MapConfig.TILE_DRAW_SIZE - markerSize) * 0.5f;
+        for (Route route : game.playerState.getRoutes()) {
+            Route currentRoute = currentRouteForDisplay(route);
+            if (currentRoute.getPath() == null || currentRoute.getPath().isEmpty()) {
+                continue;
+            }
+
+            List<GridPoint2> steps = currentRoute.getPath().getSteps();
+            int stride = Math.max(1, steps.size() / 180);
+            for (int i = 0; i < steps.size(); i += stride) {
+                GridPoint2 step = steps.get(i);
+                if (step.x < startTileX || step.x > endTileX || step.y < startTileY || step.y > endTileY) {
+                    continue;
+                }
+                game.batch.draw(hudPixel,
+                        step.x * MapConfig.TILE_DRAW_SIZE + offset,
+                        step.y * MapConfig.TILE_DRAW_SIZE + offset,
+                        markerSize,
+                        markerSize);
+            }
+        }
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawPrototypeVehicles(int startTileX, int endTileX, int startTileY, int endTileY) {
+        List<Vehicle> vehicles = game.playerState.getVehicles();
+        if (vehicles.isEmpty()) {
+            return;
+        }
+
+        List<Route> routes = game.playerState.getRoutes();
+        for (int i = 0; i < vehicles.size(); i++) {
+            Vehicle vehicle = vehicles.get(i);
+            if (routes.isEmpty()) {
+                CitySite homeCity = cityByName(vehicle.homeCityName());
+                if (homeCity != null) {
+                    drawPrototypeVehicleAt(homeCity.centerX + parkedVehicleOffsetX(i),
+                            homeCity.centerY + parkedVehicleOffsetY(i), vehicle);
+                }
+                continue;
+            }
+
+            Route route = currentRouteForDisplay(routes.get(Math.floorMod(vehicle.id() - 1, routes.size())));
+            GridPoint2 routeStep = animatedVehicleStep(vehicle, route);
+            if (routeStep == null) {
+                continue;
+            }
+            if (routeStep.x < startTileX - 2 || routeStep.x > endTileX + 2
+                    || routeStep.y < startTileY - 2 || routeStep.y > endTileY + 2) {
+                continue;
+            }
+            drawPrototypeVehicleAt(routeStep.x + vehicleLaneOffset(i), routeStep.y + vehicleLaneOffset(i), vehicle);
+        }
+    }
+
+    private Route currentRouteForDisplay(Route route) {
+        Route currentRoute = routeNetwork.computeFlexibleRoute(route.getOrigin(), route.getDestination());
+        return currentRoute == null ? route : currentRoute;
+    }
+
+    private GridPoint2 animatedVehicleStep(Vehicle vehicle, Route route) {
+        if (route.getPath() == null || route.getPath().isEmpty()) {
+            return null;
+        }
+
+        List<GridPoint2> steps = route.getPath().getSteps();
+        if (steps.size() == 1) {
+            return steps.get(0);
+        }
+
+        int loopLength = (steps.size() - 1) * 2;
+        float speedTilesPerSecond = Math.max(2f, vehicle.type().speed() * 0.55f);
+        int loopIndex = (int) ((prototypeVehicleTimer * speedTilesPerSecond + vehicle.id() * 9f) % loopLength);
+        int stepIndex = loopIndex < steps.size() ? loopIndex : loopLength - loopIndex;
+        return steps.get(stepIndex);
+    }
+
+    private void drawPrototypeVehicleAt(float tileX, float tileY, Vehicle vehicle) {
+        float tileSize = MapConfig.TILE_DRAW_SIZE;
+        float size = tileSize * 1.55f;
+        float x = tileX * tileSize + (tileSize - size) * 0.5f;
+        float y = tileY * tileSize + (tileSize - size) * 0.5f;
+
+        game.batch.setColor(0f, 0f, 0f, 0.35f);
+        game.batch.draw(hudPixel, x + size * 0.15f, y - size * 0.05f, size * 0.82f, size * 0.28f);
+
+        game.batch.setColor(1f, 1f, 1f, 1f);
+        game.batch.draw(woodenCartRegion, x, y, size, size);
+
+        game.batch.setColor(vehicleMarkerColor(vehicle));
+        game.batch.draw(hudPixel, x + size * 0.64f, y + size * 0.70f, size * 0.22f, size * 0.22f);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private Color vehicleMarkerColor(Vehicle vehicle) {
+        return switch (vehicle.type()) {
+            case DONKEY_CARAVAN -> new Color(0.92f, 0.82f, 0.56f, 1f);
+            case CAMEL_TRAIN -> new Color(0.95f, 0.62f, 0.25f, 1f);
+            case FELUCCA_BOAT -> new Color(0.20f, 0.66f, 0.95f, 1f);
+            case CARGO_BARGE -> new Color(0.68f, 0.45f, 0.24f, 1f);
+        };
+    }
+
+    private CitySite cityByName(String name) {
+        for (CitySite city : tileMap.cities()) {
+            if (city.name.equals(name)) {
+                return city;
+            }
+        }
+        return null;
+    }
+
+    private float parkedVehicleOffsetX(int index) {
+        return -4f + (index % 4) * 2.5f;
+    }
+
+    private float parkedVehicleOffsetY(int index) {
+        return -3.5f + (index / 4) * 2.5f;
+    }
+
+    private float vehicleLaneOffset(int index) {
+        return ((index % 3) - 1) * 0.18f;
+    }
+
+    private void drawRouteCreationMarker() {
+        if (routeOriginCity == null) {
+            return;
+        }
+
+        float tileSize = MapConfig.TILE_DRAW_SIZE;
+        float drawX = (routeOriginCity.centerX - CitySite.CORE_HALF_SIZE) * tileSize;
+        float drawY = (routeOriginCity.centerY - CitySite.CORE_HALF_SIZE) * tileSize;
+        float size = (CitySite.CORE_HALF_SIZE * 2 + 1) * tileSize;
+        float brd = 4f;
+
+        game.batch.setColor(0.12f, 0.90f, 0.92f, 0.85f);
+        game.batch.draw(hudPixel, drawX, drawY, size, brd);
+        game.batch.draw(hudPixel, drawX, drawY + size - brd, size, brd);
+        game.batch.draw(hudPixel, drawX, drawY, brd, size);
+        game.batch.draw(hudPixel, drawX + size - brd, drawY, brd, size);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
     // ── Hover tile highlight ────────────────────────────────────────
 
     private void drawHoverHighlight() {
@@ -833,6 +1293,7 @@ public class GameScreen extends ScreenAdapter {
         handleInput(delta);
         animTime += delta;
         caravanManager.update(delta);
+        prototypeVehicleTimer += delta;
 
         // Advance in-game calendar
         monthTimer += delta;
@@ -942,6 +1403,9 @@ public class GameScreen extends ScreenAdapter {
 
         // Layer 6: Roads (player placed)
         drawRoads(startTileX, endTileX, startTileY, endTileY);
+        drawPlayerRoutes(startTileX, endTileX, startTileY, endTileY);
+        drawPrototypeVehicles(startTileX, endTileX, startTileY, endTileY);
+        drawRouteCreationMarker();
 
         // Layer 6.5: Caravans moving along roads
         drawCaravans();
@@ -1249,6 +1713,19 @@ public class GameScreen extends ScreenAdapter {
         // ── Bottom Toolbar (Build Menu) ────────────────────────────────
         drawToolbar();
 
+        // ── Selected City Panel ────────────────────────────────────────
+        drawSelectedCityPanel(screenW, screenH);
+
+        // ── Vehicle Market Dialog ──────────────────────────────────────
+        if (vehicleMarketOpen) {
+            drawVehicleMarket(screenW, screenH);
+        }
+
+        // ── Route Assignment Dialog ───────────────────────────────────
+        if (routeAssignmentOpen) {
+            drawRouteAssignmentDialog(screenW, screenH);
+        }
+
         // ── Feedback message (centre-bottom) ───────────────────────────
         if (feedbackTimer > 0f) {
             feedbackTimer -= delta;
@@ -1262,6 +1739,239 @@ public class GameScreen extends ScreenAdapter {
         }
 
         game.batch.end();
+    }
+
+    private void drawSelectedCityPanel(int screenW, int screenH) {
+        float panelW = Math.min(330f, Math.max(260f, screenW - 32f));
+        float panelH = 204f;
+        float panelX = Math.max(16f, screenW - panelW - MINIMAP_PADDING_PX);
+        float panelY = screenH - MINIMAP_PADDING_PX - 52f - 12f - panelH;
+        if (panelY < BTN_H + TOOLBAR_PADDING * 2 + 18f) {
+            panelY = BTN_H + TOOLBAR_PADDING * 2 + 18f;
+        }
+
+        game.batch.setColor(0.08f, 0.08f, 0.08f, 0.82f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        float brd = 1.5f;
+        game.batch.setColor(0.80f, 0.65f, 0.10f, 0.90f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY + panelH - brd, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY, brd, panelH);
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY, brd, panelH);
+
+        if (selectedCity == null) {
+            hudFont.setColor(0.80f, 0.72f, 0.52f, 1f);
+            hudFont.draw(game.batch, "No city selected", panelX + 14f, panelY + panelH - 20f);
+            hudFont.setColor(0.64f, 0.64f, 0.64f, 1f);
+            hudFont.draw(game.batch, "Pointer: click a city", panelX + 14f, panelY + panelH - 48f);
+            hudFont.draw(game.batch, "Road: R   Demolish: X", panelX + 14f, panelY + panelH - 72f);
+            hudFont.draw(game.batch, "C: route from selected city", panelX + 14f, panelY + panelH - 96f);
+            hudFont.draw(game.batch, "F: assign vehicles", panelX + 14f, panelY + panelH - 120f);
+            hudFont.draw(game.batch, "Esc returns to pointer", panelX + 14f, panelY + panelH - 144f);
+            hudFont.setColor(Color.WHITE);
+            game.batch.setColor(1f, 1f, 1f, 1f);
+            return;
+        }
+
+        hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+        hudFont.draw(game.batch, selectedCity.name, panelX + 14f, panelY + panelH - 18f);
+
+        hudFont.setColor(0.82f, 0.82f, 0.78f, 1f);
+        hudFont.draw(game.batch, "Type: " + cityTypeLabel(selectedCity.type), panelX + 14f, panelY + panelH - 44f);
+        hudFont.draw(game.batch, "Tile: " + selectedCity.centerX + ", " + selectedCity.centerY,
+                panelX + 14f, panelY + panelH - 68f);
+        hudFont.draw(game.batch, "Demand: " + cityDemandLabel(selectedCity.type), panelX + 14f, panelY + panelH - 92f);
+        hudFont.draw(game.batch, "Cargo: " + cityCargoLabel(selectedCity.type), panelX + 14f, panelY + panelH - 116f);
+        hudFont.draw(game.batch, "Routes: " + game.playerState.getRouteCount()
+                + "  Assigned: " + game.playerState.getAssignedVehicleCount(),
+                panelX + 14f, panelY + panelH - 140f);
+
+        hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
+        if (routeOriginCity == null) {
+            hudFont.draw(game.batch, "V: vehicle market", panelX + 14f, panelY + 42f);
+            hudFont.draw(game.batch, "C: route   F: assign", panelX + 14f, panelY + 18f);
+        } else {
+            hudFont.draw(game.batch, "Route from " + routeOriginCity.name, panelX + 14f, panelY + 42f);
+            hudFont.draw(game.batch, "Click destination city", panelX + 14f, panelY + 18f);
+        }
+        hudFont.setColor(Color.WHITE);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawVehicleMarket(int screenW, int screenH) {
+        float panelW = Math.min(430f, Math.max(320f, screenW - 32f));
+        float panelH = 300f;
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        game.batch.setColor(0.04f, 0.03f, 0.02f, 0.92f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        float brd = 2f;
+        game.batch.setColor(0.80f, 0.65f, 0.10f, 1f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY + panelH - brd, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY, brd, panelH);
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY, brd, panelH);
+
+        String title = selectedCity == null ? "Vehicle Market" : selectedCity.name + " Vehicle Market";
+        hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+        hudFont.draw(game.batch, title, panelX + 18f, panelY + panelH - 18f);
+        hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+        hudFont.draw(game.batch, "Click a vehicle or press 1-4. Esc closes.", panelX + 18f, panelY + panelH - 42f);
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 48f;
+        float firstRowY = panelY + panelH - 88f;
+        VehicleType[] types = VehicleType.values();
+        for (int i = 0; i < types.length; i++) {
+            VehicleType type = types[i];
+            boolean affordable = game.playerState.canAfford(type.price());
+            float rowY = firstRowY - i * (rowH + 8f);
+
+            game.batch.setColor(affordable ? 0.14f : 0.20f, affordable ? 0.13f : 0.08f, 0.07f, 0.96f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, rowH);
+            game.batch.setColor(affordable ? 0.62f : 0.50f, affordable ? 0.50f : 0.20f, 0.14f, 0.90f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY + rowH - 1.5f, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY, 1.5f, rowH);
+            game.batch.draw(hudPixel, rowX + rowW - 1.5f, rowY, 1.5f, rowH);
+
+            hudFont.setColor(affordable ? Color.WHITE : new Color(0.84f, 0.42f, 0.36f, 1f));
+            hudFont.draw(game.batch, (i + 1) + ". " + type.displayName() + " - " + type.price() + "g",
+                    rowX + 10f, rowY + rowH - 10f);
+            hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+            String specs = "Cap " + type.capacity() + "  Speed " + type.speed() + "  " + type.role();
+            hudFont.draw(game.batch, specs, rowX + 10f, rowY + 18f);
+        }
+
+        hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
+        hudFont.draw(game.batch, "Owned vehicles: " + game.playerState.getVehicleCount(),
+                panelX + 18f, panelY + 18f);
+        hudFont.setColor(Color.WHITE);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private void drawRouteAssignmentDialog(int screenW, int screenH) {
+        float panelW = Math.min(520f, Math.max(360f, screenW - 32f));
+        float panelH = Math.min(410f, Math.max(320f, screenH - 32f));
+        float panelX = (screenW - panelW) / 2f;
+        float panelY = (screenH - panelH) / 2f;
+
+        game.batch.setColor(0.04f, 0.03f, 0.02f, 0.94f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, panelH);
+
+        float brd = 2f;
+        game.batch.setColor(0.12f, 0.78f, 0.84f, 1f);
+        game.batch.draw(hudPixel, panelX, panelY, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY + panelH - brd, panelW, brd);
+        game.batch.draw(hudPixel, panelX, panelY, brd, panelH);
+        game.batch.draw(hudPixel, panelX + panelW - brd, panelY, brd, panelH);
+
+        hudFont.setColor(1f, 0.87f, 0.27f, 1f);
+        hudFont.draw(game.batch, "Fleet Route Assignment", panelX + 18f, panelY + panelH - 18f);
+        hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+        hudFont.draw(game.batch, "Click a vehicle or press 1-5. Arrows change route. Esc closes.",
+                panelX + 18f, panelY + panelH - 42f);
+
+        Route route = selectedAssignmentRoute();
+        float routeBoxX = panelX + 18f;
+        float routeBoxY = panelY + panelH - 116f;
+        float routeBoxW = panelW - 36f;
+        float routeBoxH = 48f;
+        game.batch.setColor(0.08f, 0.14f, 0.14f, 0.96f);
+        game.batch.draw(hudPixel, routeBoxX, routeBoxY, routeBoxW, routeBoxH);
+        game.batch.setColor(0.12f, 0.78f, 0.84f, 0.90f);
+        game.batch.draw(hudPixel, routeBoxX, routeBoxY, routeBoxW, 1.5f);
+        game.batch.draw(hudPixel, routeBoxX, routeBoxY + routeBoxH - 1.5f, routeBoxW, 1.5f);
+        game.batch.draw(hudPixel, routeBoxX, routeBoxY, 1.5f, routeBoxH);
+        game.batch.draw(hudPixel, routeBoxX + routeBoxW - 1.5f, routeBoxY, 1.5f, routeBoxH);
+
+        hudFont.setColor(Color.WHITE);
+        String routeText = route == null ? "No route selected" : routeSummary(route);
+        hudFont.draw(game.batch, "Route " + (assignmentRouteIndex + 1) + "/"
+                + Math.max(1, game.playerState.getRouteCount()) + ": " + routeText,
+                routeBoxX + 10f, routeBoxY + routeBoxH - 10f);
+        hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+        String lengthText = route == null ? "Create routes with C before assigning."
+                : "Length " + route.getLength() + " tiles";
+        hudFont.draw(game.batch, lengthText, routeBoxX + 10f, routeBoxY + 17f);
+
+        float rowX = panelX + 18f;
+        float rowW = panelW - 36f;
+        float rowH = 42f;
+        float firstRowY = panelY + panelH - 166f;
+        List<Vehicle> vehicles = game.playerState.getVehicles();
+        int displayCount = Math.min(5, vehicles.size());
+        for (int i = 0; i < displayCount; i++) {
+            Vehicle vehicle = vehicles.get(i);
+            boolean assignedToSelected = route != null && vehicle.assignedRoute() == route;
+            float rowY = firstRowY - i * (rowH + 6f);
+
+            game.batch.setColor(assignedToSelected ? 0.10f : 0.14f,
+                    assignedToSelected ? 0.25f : 0.13f,
+                    assignedToSelected ? 0.23f : 0.07f,
+                    0.96f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, rowH);
+            game.batch.setColor(assignedToSelected ? 0.12f : 0.46f,
+                    assignedToSelected ? 0.78f : 0.38f,
+                    assignedToSelected ? 0.84f : 0.14f,
+                    0.90f);
+            game.batch.draw(hudPixel, rowX, rowY, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY + rowH - 1.5f, rowW, 1.5f);
+            game.batch.draw(hudPixel, rowX, rowY, 1.5f, rowH);
+            game.batch.draw(hudPixel, rowX + rowW - 1.5f, rowY, 1.5f, rowH);
+
+            hudFont.setColor(Color.WHITE);
+            hudFont.draw(game.batch, (i + 1) + ". " + vehicle.displayName()
+                    + " - cap " + vehicle.type().capacity(),
+                    rowX + 10f, rowY + rowH - 9f);
+            hudFont.setColor(0.72f, 0.72f, 0.68f, 1f);
+            String assignment = vehicle.hasRouteAssignment()
+                    ? "Assigned: " + routeSummary(vehicle.assignedRoute())
+                    : "Unassigned";
+            hudFont.draw(game.batch, assignment, rowX + 10f, rowY + 16f);
+        }
+
+        hudFont.setColor(0.66f, 0.83f, 0.82f, 1f);
+        String footer = vehicles.size() > displayCount
+                ? "Showing first " + displayCount + " vehicles"
+                : "Assigned vehicles: " + game.playerState.getAssignedVehicleCount();
+        hudFont.draw(game.batch, footer, panelX + 18f, panelY + 18f);
+        hudFont.setColor(Color.WHITE);
+        game.batch.setColor(1f, 1f, 1f, 1f);
+    }
+
+    private String cityTypeLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Capital trade hub";
+            case NORTH -> "Northern trade town";
+            case SOUTH -> "Southern quarry post";
+            case EAST -> "Eastern caravan gate";
+            case WEST -> "Western oasis market";
+        };
+    }
+
+    private String cityDemandLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Stone blocks, tourists";
+            case NORTH -> "Cotton, papyrus";
+            case SOUTH -> "Gold, stone blocks";
+            case EAST -> "Spices, artifacts";
+            case WEST -> "Dates, figs";
+        };
+    }
+
+    private String cityCargoLabel(CitySite.CityType type) {
+        return switch (type) {
+            case CAPITAL -> "Tourists";
+            case NORTH -> "Cotton";
+            case SOUTH -> "Gold";
+            case EAST -> "Spices";
+            case WEST -> "Dates";
+        };
     }
 
     // ── Toolbar drawing ──────────────────────────────────────────

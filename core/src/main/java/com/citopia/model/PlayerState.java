@@ -1,5 +1,10 @@
 package com.citopia.model;
 
+import com.citopia.world.transport.Route;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Issue #24 – PlayerState (Economy)
  *
@@ -28,6 +33,9 @@ public class PlayerState {
     private int month  = 1;   // 1-12, cosmetic for now
 
     private final CityBudget budget;
+    private final List<Vehicle> vehicles = new ArrayList<>();
+    private final List<Route> routes = new ArrayList<>();
+    private int nextVehicleId = 1;
 
     public PlayerState() {
         this.budget = new CityBudget(STARTING_GOLD, MAX_DEBT);
@@ -38,6 +46,27 @@ public class PlayerState {
     public int getGold()   { return budget.getBalance(); }
     public int getYear()   { return year; }
     public int getMonth()  { return month; }
+    public int getVehicleCount() { return vehicles.size(); }
+
+    public List<Vehicle> getVehicles() {
+        return Collections.unmodifiableList(vehicles);
+    }
+
+    public int getAssignedVehicleCount() {
+        int assigned = 0;
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.hasRouteAssignment()) {
+                assigned++;
+            }
+        }
+        return assigned;
+    }
+
+    public int getRouteCount() { return routes.size(); }
+
+    public List<Route> getRoutes() {
+        return Collections.unmodifiableList(routes);
+    }
 
     /** True if the player can afford a purchase of {@code cost} gold. */
     public boolean canAfford(int cost) {
@@ -62,6 +91,79 @@ public class PlayerState {
         budget.collectTaxes(0, 0);   // zero-pop call just to satisfy interface
         // Direct credit — bypass the population-based formula
         budgetCredit(amount);
+    }
+
+    /**
+     * Buy a vehicle from a selected city market.
+     * Returns the purchased vehicle, or null when the player cannot afford it.
+     */
+    public Vehicle purchaseVehicle(VehicleType type, String homeCityName) {
+        if (type == null) {
+            throw new IllegalArgumentException("Vehicle type is required");
+        }
+        if (homeCityName == null || homeCityName.isBlank()) {
+            throw new IllegalArgumentException("Home city is required");
+        }
+        if (!spend(type.price())) {
+            return null;
+        }
+
+        Vehicle vehicle = new Vehicle(nextVehicleId++, type, homeCityName);
+        vehicles.add(vehicle);
+        return vehicle;
+    }
+
+    /**
+     * Add a route to the player's transport network.
+     * Returns false when the same city pair is already connected.
+     */
+    public boolean addRoute(Route route) {
+        if (route == null) {
+            throw new IllegalArgumentException("Route is required");
+        }
+        if (route.getOrigin() == null || route.getDestination() == null) {
+            throw new IllegalArgumentException("Route endpoints are required");
+        }
+        if (route.getPath() == null || route.getPath().isEmpty()) {
+            throw new IllegalArgumentException("Route path is required");
+        }
+        if (route.getOrigin() == route.getDestination()) {
+            throw new IllegalArgumentException("Route must connect two different cities");
+        }
+
+        for (Route existing : routes) {
+            boolean sameDirection = existing.getOrigin() == route.getOrigin()
+                    && existing.getDestination() == route.getDestination();
+            boolean reverseDirection = existing.getOrigin() == route.getDestination()
+                    && existing.getDestination() == route.getOrigin();
+            if (sameDirection || reverseDirection) {
+                return false;
+            }
+        }
+
+        routes.add(route);
+        return true;
+    }
+
+    /**
+     * Assign an owned vehicle to an owned route.
+     * Returns false when the vehicle id is not part of the player's fleet.
+     */
+    public boolean assignVehicleToRoute(int vehicleId, Route route) {
+        if (route == null) {
+            throw new IllegalArgumentException("Route is required");
+        }
+        if (!routes.contains(route)) {
+            throw new IllegalArgumentException("Route must belong to the player");
+        }
+
+        for (Vehicle vehicle : vehicles) {
+            if (vehicle.id() == vehicleId) {
+                vehicle.assignRoute(route);
+                return true;
+            }
+        }
+        return false;
     }
 
     // ── Year/Month tick (called by game loop once per in-game period) ─────────
